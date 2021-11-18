@@ -8,7 +8,7 @@ Keyborg is a library that tracks the state of current keyboard input on a web pa
 
 ### Installation
 
-```bassh
+```bash
 # NPM
 npm install --save keyborg
 # Yarn
