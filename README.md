@@ -26,9 +26,9 @@ const keyborg = createKeyborg(window);
 // This is called every time the keyboard input state changes
 const handler = (isUsingKeyboard) => {
   if (isUsingKeyboard) {
-    document.body.setAttribute('data-is-keyboard', 'true');
+    document.body.setAttribute("data-is-keyboard", "true");
   } else {
-    document.body.removeAttribute('data-is-keyboard');
+    document.body.removeAttribute("data-is-keyboard");
   }
 };
 
