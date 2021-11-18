@@ -28,7 +28,7 @@ const handler = (isUsingKeyboard) => {
   if (isUsingKeyboard) {
     document.body.setAttribute('data-is-keyboard', 'true');
   } else {
-    document.removeAttribute('data-is-keyboard');
+    document.body.removeAttribute('data-is-keyboard');
   }
 }
 
