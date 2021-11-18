@@ -18,7 +18,7 @@ yarn add keyborg
 ### Usage
 
 ```js
-import { createKeyborg } from 'keyborg';
+import { createKeyborg } from "keyborg";
 
 // initializes keyborg on the current window
 const keyborg = createKeyborg(window);
@@ -30,7 +30,7 @@ const handler = (isUsingKeyboard) => {
   } else {
     document.body.removeAttribute('data-is-keyboard');
   }
-}
+};
 
 keyborg.subscribe(handler);
 keyborg.unsubscribe(handler);
@@ -40,10 +40,10 @@ keyborg.unsubscribe(handler);
 
 Pretty simple currently, you only need to know about theese commands
 
-* `npm install` - install dependencies
-* `npm run build` - builds the library
-* `npm run format` - runs prettier to format code
-* `npm run lint` - eslint
+- `npm install` - install dependencies
+- `npm run build` - builds the library
+- `npm run format` - runs prettier to format code
+- `npm run lint` - eslint
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
