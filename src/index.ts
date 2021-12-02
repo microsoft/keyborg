@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { Keyborg, createKeyborg, disposeKeyborg } from "./Keyborg";
+export { Keyborg, KeyborgCallback, createKeyborg, disposeKeyborg } from "./Keyborg";
 
 export {
   getLastFocusedProgrammatically,
