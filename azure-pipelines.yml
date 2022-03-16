@@ -9,8 +9,44 @@ variables:
     value: production,externalfacing
 
 jobs:
+- job: Compliance
+  displayName: Compliance checks
+  pool:
+    name: uifabric-windows-2019-small
+  steps:
+  - checkout: self
+    clean: true
+
+  - task: UseDotNet@2
+    displayName: Use .NET Core sdk 3.x
+    inputs:
+      version: 3.x
+
+  - task: CredScan@3
+    displayName: Run Credential Scanner
+    inputs:
+      debugMode: false
+      folderSuppression: false
+
+  - task: ESLint@1
+    displayName: Run ESLint
+
+  - task: PublishSecurityAnalysisLogs@3
+    displayName: Publish Guardian Artifacts
+
+  - task: AssetRetention@3
+    displayName: ARtifact Retention Orchestrator Workflow (ARROW)
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    inputs:
+      ArrowServiceConnection: dd6a5756-fb5f-4a28-98b6-a525d1421299
+      IsShipped: true
+
+  - task: PostAnalysis@2
+    displayName: Guardian Break
+
 - job: Release
-  displayName: Release
+  displayName: Release -VV
+  dependsOn: Compliance
 
   pool:
     name: 1ES-Host-Ubuntu
@@ -44,7 +80,7 @@ jobs:
 
         git config user.email "fluentui-internal@service.microsoft.com"
 
-        git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
+        git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/keyborg.git
 
   - task: CmdLine@2
     displayName: Write npmrc for publish token
@@ -62,23 +98,7 @@ jobs:
   - task: CmdLine@2
     displayName: Publish (prerelease)
     condition: eq(variables.prerelease, true)
-    continueOnError: true
     inputs:
-      script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci -VV
+      script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
     env:
         NPM_TOKEN: $(npmToken)
-
-  - task: CmdLine@2
-    displayName: status
-    inputs:
-      script: git status
-
-  - task: CmdLine@2
-    displayName: fetch
-    inputs:
-      script: git fetch origin
-
-  - task: CmdLine@2
-    displayName: diff
-    inputs:
-      script: git diff origin/test-release
