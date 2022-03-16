@@ -45,7 +45,7 @@ jobs:
     displayName: Guardian Break
 
 - job: Release
-  displayName: Release
+  displayName: Release -VV
   dependsOn: Compliance
 
   pool:
@@ -80,7 +80,7 @@ jobs:
 
         git config user.email "fluentui-internal@service.microsoft.com"
 
-        git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
+        git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/keyborg.git
 
   - task: CmdLine@2
     displayName: Write npmrc for publish token
