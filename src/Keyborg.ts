@@ -18,14 +18,19 @@ interface WindowWithKeyborg extends Window {
   };
 }
 
-const KeyTab = 9;
-const KeyEsc = 27;
-
-const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
-// during _dismissTimeout time, dismiss the keyboard
-// navigation mode.
+const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
+// during _dismissTimeout time, dismiss the keyboard navigation mode.
 
 let _lastId = 0;
+
+export interface KeyborgProps {
+  // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
+  // it. Could be limited to, for example, just Tab (or Tab and arrow keys).
+  triggerKeys?: number[];
+  // Keys to be used to dismiss keyboard navigation mode using keyboard (in addition to
+  // mouse clicks which dismiss it). For example, Esc could be used to dismiss.
+  dismissKeys?: number[];
+}
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
@@ -88,11 +93,26 @@ class KeyborgCore implements Disposable {
   private _win?: WindowWithKeyborg;
   private _isMouseUsed = false;
   private _dismissTimer: number | undefined;
+  private _triggerKeys?: Set<number>;
+  private _dismissKeys?: Set<number>;
 
-  constructor(win: WindowWithKeyborg) {
+  constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
     this.id = "c" + ++_lastId;
     this._win = win;
     const doc = win.document;
+
+    if (props) {
+      const triggerKeys = props.triggerKeys;
+      const dismissKeys = props.dismissKeys;
+
+      if (triggerKeys?.length) {
+        this._triggerKeys = new Set(triggerKeys);
+      }
+
+      if (dismissKeys?.length) {
+        this._dismissKeys = new Set(dismissKeys);
+      }
+    }
 
     doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true); // Capture!
     doc.addEventListener("mousedown", this._onMouseDown, true); // Capture!
@@ -190,9 +210,15 @@ class KeyborgCore implements Disposable {
   private _onKeyDown = (e: KeyboardEvent): void => {
     const isNavigatingWithKeyboard = _state.getVal();
 
-    if (!isNavigatingWithKeyboard && e.keyCode === KeyTab) {
+    const keyCode = e.keyCode;
+    const triggerKeys = this._triggerKeys;
+
+    if (
+      !isNavigatingWithKeyboard &&
+      (!triggerKeys || triggerKeys.has(keyCode))
+    ) {
       _state.setVal(true);
-    } else if (isNavigatingWithKeyboard && e.keyCode === KeyEsc) {
+    } else if (isNavigatingWithKeyboard && this._dismissKeys?.has(keyCode)) {
       this._scheduleDismiss();
     }
   };
@@ -232,8 +258,8 @@ export class Keyborg {
   private _core?: KeyborgCore;
   private _cb: KeyborgCallback[] = [];
 
-  static create(win: WindowWithKeyborg): Keyborg {
-    return new Keyborg(win);
+  static create(win: WindowWithKeyborg, props?: KeyborgProps): Keyborg {
+    return new Keyborg(win, props);
   }
 
   static dispose(instance: Keyborg): void {
@@ -247,7 +273,7 @@ export class Keyborg {
     instance._cb.forEach((callback) => callback(isNavigatingWithKeyboard));
   }
 
-  private constructor(win: WindowWithKeyborg) {
+  private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
     this._id = "k" + ++_lastId;
     this._win = win;
 
@@ -257,7 +283,7 @@ export class Keyborg {
       this._core = current.core;
       current.refs[this._id] = this;
     } else {
-      this._core = new KeyborgCore(win);
+      this._core = new KeyborgCore(win, props);
       win.__keyborg = {
         core: this._core,
         refs: { [this._id]: this },
@@ -320,8 +346,8 @@ export class Keyborg {
   }
 }
 
-export function createKeyborg(win: Window): Keyborg {
-  return Keyborg.create(win);
+export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
+  return Keyborg.create(win, props);
 }
 
 export function disposeKeyborg(instance: Keyborg) {
