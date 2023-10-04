@@ -91,7 +91,7 @@ class KeyborgCore implements Disposable {
   readonly id: string;
 
   private _win?: WindowWithKeyborg;
-  private _isMouseUsed = false;
+  private _isMouseUsedTimer: number | undefined;
   private _dismissTimer: number | undefined;
   private _triggerKeys?: Set<number>;
   private _dismissKeys?: Set<number>;
@@ -127,6 +127,11 @@ class KeyborgCore implements Disposable {
     const win = this._win;
 
     if (win) {
+      if (this._isMouseUsedTimer) {
+        win.clearTimeout(this._isMouseUsedTimer);
+        this._isMouseUsedTimer = undefined;
+      }
+
       if (this._dismissTimer) {
         win.clearTimeout(this._dismissTimer);
         this._dismissTimer = undefined;
@@ -164,9 +169,13 @@ class KeyborgCore implements Disposable {
   }
 
   private _onFocusIn = (e: KeyborgFocusInEvent) => {
-    if (this._isMouseUsed) {
-      this._isMouseUsed = false;
+    // When the focus is moved not programmatically and without keydown events,
+    // it is likely that the focus is moved by screen reader (as it might swallow
+    // the events when the screen reader shortcuts are used). The screen reader
+    // usage is keyboard navigation.
 
+    if (this._isMouseUsedTimer) {
+      // There was a mouse event recently.
       return;
     }
 
@@ -202,7 +211,17 @@ class KeyborgCore implements Disposable {
       return;
     }
 
-    this._isMouseUsed = true;
+    const win = this._win;
+
+    if (win) {
+      if (this._isMouseUsedTimer) {
+        win.clearTimeout(this._isMouseUsedTimer);
+      }
+
+      this._isMouseUsedTimer = win.setTimeout(() => {
+        delete this._isMouseUsedTimer;
+      }, 1000); // Keeping the indication of the mouse usage for some time.
+    }
 
     _state.setVal(false);
   };
