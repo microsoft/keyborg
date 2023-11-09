@@ -236,6 +236,22 @@ class KeyborgCore implements Disposable {
       !isNavigatingWithKeyboard &&
       (!triggerKeys || triggerKeys.has(keyCode))
     ) {
+      const activeElement = this._win?.document.activeElement as
+        | HTMLElement
+        | null
+        | undefined;
+
+      if (
+        activeElement &&
+        (activeElement.tagName === "INPUT" ||
+          activeElement.tagName === "TEXTAREA" ||
+          activeElement.contentEditable === "true")
+      ) {
+        // We're inside an input, textarea or contenteditable, it's not
+        // keyboard navigation, it is text editing scenario.
+        return;
+      }
+
       _state.setVal(true);
     } else if (isNavigatingWithKeyboard && this._dismissKeys?.has(keyCode)) {
       this._scheduleDismiss();
