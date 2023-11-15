@@ -106,7 +106,8 @@ export function setupFocusEvent(win: Window): void {
       if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
         details.isFocusedProgrammatically =
           target === data.lastFocusedProgrammatically?.deref();
-
+      }
+      if (!details.isFocusedProgrammatically) {
         data.lastFocusedProgrammatically = undefined;
       }
 
@@ -165,7 +166,9 @@ export function disposeFocusEvent(win: Window): void {
 
 /**
  * @param win The window that stores keyborg focus events
- * @returns The last element focused with element.focus()
+ * @returns The last element focused with element.focus(),
+ *   or `null` if focus moved without element.focus(),
+ *   or `undefined` if Keyborg was not initialized on the window.
  */
 export function getLastFocusedProgrammatically(
   win: Window
