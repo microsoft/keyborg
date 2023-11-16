@@ -166,9 +166,7 @@ export function disposeFocusEvent(win: Window): void {
 
 /**
  * @param win The window that stores keyborg focus events
- * @returns The last element focused with element.focus(),
- *   or `null` if focus moved without element.focus(),
- *   or `undefined` if Keyborg was not initialized on the window.
+ * @returns The last element focused with element.focus()
  */
 export function getLastFocusedProgrammatically(
   win: Window
