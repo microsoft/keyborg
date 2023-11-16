@@ -106,7 +106,8 @@ export function setupFocusEvent(win: Window): void {
       if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
         details.isFocusedProgrammatically =
           target === data.lastFocusedProgrammatically?.deref();
-
+      }
+      if (!details.isFocusedProgrammatically) {
         data.lastFocusedProgrammatically = undefined;
       }
 
