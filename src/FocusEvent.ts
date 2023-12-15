@@ -132,6 +132,7 @@ export function setupFocusEvent(win: Window): void {
       detail: details,
     });
 
+    // Tabster (and other users) can still use the legacy details field - keeping for backwards compat
     event.details = details;
 
     if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
