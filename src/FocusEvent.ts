@@ -92,6 +92,17 @@ export function setupFocusEvent(win: Window): void {
 
   kwin.HTMLElement.prototype.focus = focus;
 
+  const focusOutShadowRootHandler = (e: FocusEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement | null;
+    const currentTarget = e.currentTarget as ShadowRoot;
+
+    // cleanup polyfill event handlers once focus leaves the shadow root
+    if (!currentTarget.contains(relatedTarget)) {
+      currentTarget.removeEventListener("focusin", focusInHandler);
+      currentTarget.removeEventListener("focusout", focusOutShadowRootHandler);
+    }
+  };
+
   const focusInHandler = (e: FocusEvent) => {
     let target = e.target as HTMLElement;
     if (!target) {
@@ -103,7 +114,9 @@ export function setupFocusEvent(win: Window): void {
       // focusin events don't bubble up through an open shadow root once focus is inside
       // once focus moves into a shadow root - we drop the same focusin handler there
       // keyborg's custom event will still bubble up since it is composed
+      // event handlers should be cleaned up once focus leaves the shadow root
       target.shadowRoot.addEventListener("focusin", focusInHandler);
+      target.shadowRoot.addEventListener("focusout", focusOutShadowRootHandler);
       target = e.composedPath()[0] as HTMLElement;
     }
 
