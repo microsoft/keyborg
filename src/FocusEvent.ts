@@ -52,7 +52,9 @@ export interface KeyborgFocusInEventDetails {
   isFocusedProgrammatically?: boolean;
 }
 
-export type KeyborgFocusInEvent = CustomEvent<KeyborgFocusInEventDetails>;
+export interface KeyborgFocusInEvent extends CustomEvent<KeyborgFocusInEventDetails> {
+  details: KeyborgFocusInEventDetails;
+}
 
 /**
  * Guarantees that the native `focus` will be used
