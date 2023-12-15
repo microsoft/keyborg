@@ -52,8 +52,12 @@ export interface KeyborgFocusInEventDetails {
   isFocusedProgrammatically?: boolean;
 }
 
-export interface KeyborgFocusInEvent extends CustomEvent<KeyborgFocusInEventDetails> {
-  details: KeyborgFocusInEventDetails;
+export interface KeyborgFocusInEvent
+  extends CustomEvent<KeyborgFocusInEventDetails> {
+  /**
+   * @deprecated - used `event.detail`
+   */
+  details?: KeyborgFocusInEventDetails;
 }
 
 /**
@@ -99,7 +103,6 @@ export function setupFocusEvent(win: Window): void {
       // focusin events don't bubble up through an open shadow root once focus is inside
       // once focus moves into a shadow root - we drop the same focusin handler there
       // keyborg's custom event will still bubble up since it is composed
-      target.shadowRoot.removeEventListener("focusin", focusInHandler);
       target.shadowRoot.addEventListener("focusin", focusInHandler);
       target = e.composedPath()[0] as HTMLElement;
     }
@@ -108,7 +111,7 @@ export function setupFocusEvent(win: Window): void {
       relatedTarget: (e.relatedTarget as HTMLElement) || undefined,
     };
 
-    const event = new CustomEvent(KEYBORG_FOCUSIN, {
+    const event: KeyborgFocusInEvent = new CustomEvent(KEYBORG_FOCUSIN, {
       cancelable: true,
       bubbles: true,
       // Allows the event to bubble past an open shadow root
@@ -116,8 +119,6 @@ export function setupFocusEvent(win: Window): void {
       detail: details,
     });
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - for backwards compatibility with tabster
     event.details = details;
 
     if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
