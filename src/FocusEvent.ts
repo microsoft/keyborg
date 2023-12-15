@@ -109,6 +109,7 @@ export function setupFocusEvent(win: Window): void {
     const event = new CustomEvent(KEYBORG_FOCUSIN, {
       cancelable: true,
       bubbles: true,
+      // Allows the event to bubble past an open shadow root
       composed: true,
       detail: details,
     });
