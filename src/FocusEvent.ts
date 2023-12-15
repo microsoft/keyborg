@@ -113,6 +113,10 @@ export function setupFocusEvent(win: Window): void {
       detail: details,
     });
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - for backwards compatibility with tabster
+    event.details = details;
+
     if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
       details.isFocusedProgrammatically =
         target === data.lastFocusedProgrammatically?.deref();
