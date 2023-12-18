@@ -183,7 +183,7 @@ class KeyborgCore implements Disposable {
       return;
     }
 
-    const details = e.details;
+    const details = e.detail;
 
     if (!details.relatedTarget) {
       return;

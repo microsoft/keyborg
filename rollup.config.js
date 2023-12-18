@@ -21,7 +21,16 @@ const config = {
   ],
   external: ["tslib"],
   plugins: [
-    typescript(),
+    typescript({
+      tsconfigOverride: {
+        compilerOptions: {
+          // https://github.com/ezolenko/rollup-plugin-typescript2/issues/268
+          emitDeclarationOnly: false,
+          stripInternal: true,
+          sourceMap: true,
+        },
+      },
+    }),
     babel({
       babelHelpers: "bundled",
       extensions,
