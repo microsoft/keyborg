@@ -10,7 +10,6 @@ import {
   setupFocusEvent,
 } from "./FocusEvent";
 import { Disposable, WeakRefInstance } from "./WeakRefInstance";
-import { getActiveElement } from "./utils";
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {
@@ -251,7 +250,8 @@ class KeyborgCore implements Disposable {
       return true;
     }
 
-    const activeElement = getActiveElement(this._win);
+    const activeElement = this._win?.document
+      .activeElement as HTMLElement | null;
     const isTriggerKey = !this._triggerKeys || this._triggerKeys.has(e.keyCode);
 
     const isEditable =
