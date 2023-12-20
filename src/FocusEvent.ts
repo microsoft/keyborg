@@ -98,26 +98,78 @@ export function setupFocusEvent(win: Window): void {
 
     // cleanup polyfill event handlers once focus leaves the shadow root
     if (!currentTarget.contains(relatedTarget)) {
-      currentTarget.removeEventListener("focusin", focusInHandler);
-      currentTarget.removeEventListener("focusout", focusOutShadowRootHandler);
+      currentTarget.removeEventListener("focusin", focusInHandler, true);
+      currentTarget.removeEventListener(
+        "focusout",
+        focusOutShadowRootHandler,
+        true
+      );
     }
   };
 
   const focusInHandler = (e: FocusEvent) => {
-    let target = e.target as HTMLElement;
+    const target = e.target as HTMLElement;
+
     if (!target) {
       return;
     }
 
     if (target.shadowRoot) {
-      // https://bugs.chromium.org/p/chromium/issues/detail?id=1512028
-      // focusin events don't bubble up through an open shadow root once focus is inside
-      // once focus moves into a shadow root - we drop the same focusin handler there
-      // keyborg's custom event will still bubble up since it is composed
-      // event handlers should be cleaned up once focus leaves the shadow root
-      target.shadowRoot.addEventListener("focusin", focusInHandler);
-      target.shadowRoot.addEventListener("focusout", focusOutShadowRootHandler);
-      target = e.composedPath()[0] as HTMLElement;
+      /**
+       * https://bugs.chromium.org/p/chromium/issues/detail?id=1512028
+       * focusin events don't bubble up through an open shadow root once focus is inside
+       * once focus moves into a shadow root - we drop the same focusin handler there
+       * keyborg's custom event will still bubble up since it is composed
+       * event handlers should be cleaned up once focus leaves the shadow root.
+       * 
+       * When a focusin event is dispatched from a shadow root, its target is the shadow root parent.
+       * Each shadow root encounter requires a new capture listener.
+       * Why capture? - we want to follow the focus event in order or descending nested shadow roots
+       * When there are no more shadow root targets - dispatch the keyborg:focusin event
+       * 
+       * 1. no focus event
+       * > document - capture listener ✅
+       *   > shadow root 1
+       *     > shadow root 2
+       *       > shadow root 3
+       *         > focused element
+       * 
+       * 2. focus event received by document listener
+       * > document - capture listener ✅ (focus event here)
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2
+       *       > shadow root 3
+       *         > focused element
+
+       * 3. focus event received by root l1 listener
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅ (focus event here)
+       *     > shadow root 2 - capture listener ✅
+       *       > shadow root 3
+       *         > focused element
+       *
+       * 4. focus event received by root l2 listener
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2 - capture listener ✅ (focus event here)
+       *       > shadow root 3 - capture listener ✅ 
+       *         > focused element
+       * 
+       * 5. focus event received by root l3 listener, no more shadow root targets
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2 - capture listener ✅
+       *       > shadow root 3 - capture listener ✅ (focus event here)
+       *         > focused element ✅ (no shadow root - dispatch keyborg event)
+       */
+      target.shadowRoot.addEventListener("focusin", focusInHandler, true);
+      target.shadowRoot.addEventListener(
+        "focusout",
+        focusOutShadowRootHandler,
+        true
+      );
+
+      return;
     }
 
     const details: KeyborgFocusInEventDetails = {
