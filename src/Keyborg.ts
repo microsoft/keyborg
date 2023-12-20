@@ -337,7 +337,7 @@ export class Keyborg {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         delete this._win!.__keyborg;
       }
-    } else if (__DEV__) {
+    } else if (process.env.NODE_ENV !== "production") {
       console.error(
         `Keyborg instance ${this._id} is being disposed incorrectly.`
       );

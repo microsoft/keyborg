@@ -10,7 +10,7 @@ const config = {
   webpack(config) {
     config.resolve = {
       alias: {
-        keyborg: path.resolve(dirname, "dist", "keyborg.esm.js"),
+        keyborg: path.resolve(dirname, "dist", "esm", "index.js"),
       },
     };
 

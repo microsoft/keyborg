@@ -18,4 +18,4 @@ export {
   KeyborgFocusInEventDetails,
 } from "./FocusEvent";
 
-export const version = __VERSION__;
+export const version = process.env.PKG_VERSION;
