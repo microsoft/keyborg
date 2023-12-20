@@ -2,7 +2,9 @@
   "compilerOptions": {
     "declaration": true,
     "noResolve": false,
+    "jsx": "preserve",
     "module": "ES2015",
+    "moduleResolution": "node",
     "target": "ES2019",
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -15,6 +17,6 @@
     "outDir": "./dist/",
     "lib": ["DOM", "ESNext"]
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "./tests/**/*", "./playwright.config.ts"],
   "exclude": ["dist", "node_modules"]
 }
