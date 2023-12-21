@@ -20,12 +20,17 @@
     "bundle-size": "npm run build && monosize measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "test": "playwright test",
+    "test:serve": "ladle serve --port 3000",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "prepublishOnly": "npm run lint && npm run format && npm run build",
     "release": "release-it"
   },
   "devDependencies": {
+    "@ladle/react": "^4.0.2",
+    "@playwright/test": "^1.40.1",
+    "playwright": "^1.40.1",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "eslint": "^8.2.0",
