@@ -38,7 +38,7 @@ export class WeakRefInstance<T extends Disposable | object> {
 
     if (this._weakRef) {
       instance = this._weakRef?.deref();
-
+      console.log("foo", instance);
       if (!instance) {
         delete this._weakRef;
       }
