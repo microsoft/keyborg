@@ -97,7 +97,7 @@ class KeyborgCore implements Disposable {
   private _dismissKeys?: Set<number>;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    this.id = "ccccccc" + ++_lastId;
     this._win = win;
     const doc = win.document;
 
