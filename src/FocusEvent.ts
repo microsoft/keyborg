@@ -102,7 +102,7 @@ export function setupFocusEvent(win: Window): void {
       currentTarget.removeEventListener(
         "focusout",
         focusOutShadowRootHandler,
-        true
+        true,
       );
     }
   };
@@ -166,7 +166,7 @@ export function setupFocusEvent(win: Window): void {
       target.shadowRoot.addEventListener(
         "focusout",
         focusOutShadowRootHandler,
-        true
+        true,
       );
 
       return;
@@ -204,7 +204,7 @@ export function setupFocusEvent(win: Window): void {
   kwin.document.addEventListener(
     "focusin",
     kwin.__keyborgData.focusInHandler,
-    true
+    true,
   );
 
   function focus(this: HTMLElement) {
@@ -213,7 +213,7 @@ export function setupFocusEvent(win: Window): void {
 
     if (keyborgNativeFocusEvent) {
       keyborgNativeFocusEvent.lastFocusedProgrammatically = new WeakRefInstance(
-        this
+        this,
       );
     }
 
@@ -238,7 +238,7 @@ export function disposeFocusEvent(win: Window): void {
     kwin.document.removeEventListener(
       "focusin",
       keyborgNativeFocusEvent.focusInHandler,
-      true
+      true,
     );
     delete kwin.__keyborgData;
   }
@@ -253,7 +253,7 @@ export function disposeFocusEvent(win: Window): void {
  * @returns The last element focused with element.focus()
  */
 export function getLastFocusedProgrammatically(
-  win: Window
+  win: Window,
 ): HTMLElement | null | undefined {
   const keyborgNativeFocusEvent = (win as WindowWithKeyborgFocusEvent)
     .__keyborgData;

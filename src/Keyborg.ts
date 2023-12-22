@@ -339,7 +339,7 @@ export class Keyborg {
       }
     } else if (process.env.NODE_ENV !== "production") {
       console.error(
-        `Keyborg instance ${this._id} is being disposed incorrectly.`
+        `Keyborg instance ${this._id} is being disposed incorrectly.`,
       );
     }
 
