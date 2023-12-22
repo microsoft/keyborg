@@ -17,7 +17,7 @@ console.log(
   nativeFocus,
   KEYBORG_FOCUSIN,
   KeyborgFocusInEvent,
-  KeyborgFocusInEventDetails
+  KeyborgFocusInEventDetails,
 );
 
 export default {

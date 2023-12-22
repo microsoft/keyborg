@@ -15,7 +15,7 @@ test("navigation between in shadow DOM", async ({ page }) => {
   // Press Tab [nav by keyboard in shadow DOM]
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("shadow-root").locator("*:focus")
+    await page.getByTestId("shadow-root").locator("*:focus"),
   ).toHaveText("Shadow DOM: Button B");
   await expect(page.getByTestId("keyboard-mode")).toHaveText("true");
 
@@ -39,7 +39,7 @@ test("navigation between light & shadow DOM", async ({ page }) => {
   // Press Tab [nav by keyboard to shadow DOM]
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("shadow-root").locator("*:focus")
+    await page.getByTestId("shadow-root").locator("*:focus"),
   ).toHaveText("Shadow DOM: Button A");
   await expect(page.getByTestId("keyboard-mode")).toHaveText("true");
 
@@ -58,13 +58,13 @@ test("navigation between nested shadow roots", async ({ page }) => {
   // Press Tab [nav by keyboard in shadow DOM]
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("shadow-root").locator("*:focus")
+    await page.getByTestId("shadow-root").locator("*:focus"),
   ).toHaveText("Shadow DOM: Button B");
 
   // Press Tab [nav by keyboard to nested shadow root]
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("nested-shadow-root").locator("*:focus")
+    await page.getByTestId("nested-shadow-root").locator("*:focus"),
   ).toHaveText("Shadow DOM: Button C");
 
   // Click the button [nav by mouse in nested shadow DOM]

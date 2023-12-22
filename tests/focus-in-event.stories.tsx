@@ -63,7 +63,7 @@ function FocusInListener(props: {
 
       scopeElementRef.current?.removeEventListener(
         KEYBORG_FOCUSIN,
-        keyborgListener
+        keyborgListener,
       );
       scopeElementRef.current?.removeEventListener("focusout", blurListener);
 
