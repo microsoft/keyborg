@@ -1,8 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from "react";
-import root from "react-shadow";
 
 import { createKeyborg, disposeKeyborg, KEYBORG_FOCUSIN } from "../src";
 import type { KeyborgFocusInEvent } from "../src";
+import { ShadowRoot } from "./common/ShadowRoot";
 
 function FocusInListener(props: {
   children: React.ReactNode;
@@ -27,7 +32,8 @@ function FocusInListener(props: {
       disposeCurrentElement();
 
       if (keyborg.isNavigatingWithKeyboard()) {
-        focusedElementRef.current = e.target as HTMLElement;
+        // Use composedPath instead of target to support shadow DOM
+        focusedElementRef.current = e.composedPath()[0] as HTMLElement;
 
         focusedElementRef.current.style.outline = "4px solid orange";
         focusedElementRef.current.classList.add("focus-visible");
@@ -97,41 +103,18 @@ export const NestedShadowRoots = () => (
       >
         <button>Light DOM: Button A</button>
       </div>
-    </FocusInListener>
 
-    <root.div
-      data-testid="shadow-root"
-      style={{
-        border: "2px solid magenta",
-        display: "flex",
-        gap: 5,
-        padding: 20,
-      }}
-    >
-      <FocusInListener
-        style={{
-          display: "flex",
-          gap: 5,
-          padding: 20,
-        }}
-      >
+      <ShadowRoot data-testid="shadow-root">
         <button>Shadow DOM: Button A</button>
         <button>Shadow DOM: Button B</button>
-      </FocusInListener>
 
-      <root.div data-testid="nested-shadow-root">
-        <FocusInListener
-          style={{
-            border: "2px solid magenta",
-            display: "flex",
-            gap: 5,
-            padding: 20,
-          }}
-        >
-          <button>Shadow DOM: Button C</button>
-          <button>Shadow DOM: Button D</button>
-        </FocusInListener>
-      </root.div>
-    </root.div>
+        <ShadowRoot data-testid="shadow-root-l1">
+          <ShadowRoot data-testid=" shadow-root-l2">
+            <button>Shadow DOM: Button C</button>
+            <button>Shadow DOM: Button D</button>
+          </ShadowRoot>
+        </ShadowRoot>
+      </ShadowRoot>
+    </FocusInListener>
   </div>
 );

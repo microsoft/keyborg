@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { test, expect } from "@playwright/test";
 
 test("Buttons scenario", async ({ page }) => {

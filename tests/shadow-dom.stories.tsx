@@ -1,7 +1,12 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from "react";
-import root from "react-shadow";
 
 import { KeyboardMode } from "./common/KeyboardMode";
+import { ShadowRoot } from "./common/ShadowRoot";
 
 export const Default = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -12,18 +17,10 @@ export const Default = () => (
       <button>Light DOM: Button B</button>
     </div>
 
-    <root.div
-      data-testid="shadow-root"
-      style={{
-        border: "2px solid magenta",
-        display: "flex",
-        gap: 5,
-        padding: 20,
-      }}
-    >
+    <ShadowRoot data-testid="shadow-root">
       <button>Shadow DOM: Button A</button>
       <button>Shadow DOM: Button B</button>
-    </root.div>
+    </ShadowRoot>
 
     <KeyboardMode />
   </div>
@@ -37,31 +34,15 @@ export const Nested = () => (
       <button>Light DOM: Button A</button>
     </div>
 
-    <root.div
-      data-testid="shadow-root"
-      style={{
-        border: "2px solid magenta",
-        display: "flex",
-        gap: 5,
-        padding: 20,
-      }}
-    >
+    <ShadowRoot data-testid="shadow-root">
       <button>Shadow DOM: Button A</button>
       <button>Shadow DOM: Button B</button>
 
-      <root.div
-        data-testid="nested-shadow-root"
-        style={{
-          border: "2px solid magenta",
-          display: "flex",
-          gap: 5,
-          padding: 20,
-        }}
-      >
+      <ShadowRoot data-testid="nested-shadow-root">
         <button>Shadow DOM: Button C</button>
         <button>Shadow DOM: Button D</button>
-      </root.div>
-    </root.div>
+      </ShadowRoot>
+    </ShadowRoot>
 
     <KeyboardMode />
   </div>
