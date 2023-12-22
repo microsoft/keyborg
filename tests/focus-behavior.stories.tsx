@@ -1,27 +1,10 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from "react";
-import { createKeyborg } from "../src";
-
-function KeyboardMode() {
-  const [isNavigatingWithKeyboard, setIsNavigatingWithKeyboard] =
-    React.useState(false);
-  const keyborg = createKeyborg(window);
-
-  React.useEffect(() => {
-    setIsNavigatingWithKeyboard(keyborg.isNavigatingWithKeyboard());
-    keyborg.subscribe(setIsNavigatingWithKeyboard);
-
-    return () => keyborg.unsubscribe(setIsNavigatingWithKeyboard);
-  }, [keyborg]);
-
-  return (
-    <div style={{ border: "2px solid grey", padding: 5 }}>
-      Is navigating with keyboard:{" "}
-      <code data-testid="keyboard-mode">
-        {isNavigatingWithKeyboard.toString()}
-      </code>
-    </div>
-  );
-}
+import { KeyboardMode } from "./common/KeyboardMode";
 
 export const Buttons = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
