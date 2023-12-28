@@ -258,7 +258,7 @@ class KeyborgCore implements Disposable {
       activeElement &&
       (activeElement.tagName === "INPUT" ||
         activeElement.tagName === "TEXTAREA" ||
-        activeElement.contentEditable === "true");
+        activeElement.isContentEditable);
 
     return isTriggerKey && !isEditable;
   }
