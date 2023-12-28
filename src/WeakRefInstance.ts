@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Disposable } from "./types";
+
 // IE11 compat, checks if WeakRef is supported
 export const _canUseWeakRef = typeof WeakRef !== "undefined";
-
-/**
- * Allows disposable instances to be used
- */
-export interface Disposable {
-  isDisposed?(): boolean;
-}
 
 /**
  * WeakRef wrapper around a HTMLElement that also supports IE11
