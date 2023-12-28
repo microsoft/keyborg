@@ -24,16 +24,27 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
-      - name: Use Node.js 16
+
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 16.x
+          node-version: 18.x
 
-      - run: npm install
+      - run: npm ci
       - run: npm run format
       - run: npm run lint
       - run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npx playwright test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
       - name: "Check for unstaged changes"
         run: |
           git status --porcelain
