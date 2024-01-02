@@ -77,8 +77,10 @@ class KeyborgCore implements Disposable {
   }
 
   set isNavigatingWithKeyboard(val: boolean) {
-    this._isNavigatingWithKeyboard_DO_NOT_USE = val;
-    this.update();
+    if (this._isNavigatingWithKeyboard_DO_NOT_USE !== val) {
+      this._isNavigatingWithKeyboard_DO_NOT_USE = val;
+      this.update();
+    }
   }
 
   dispose(): void {
