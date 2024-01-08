@@ -229,34 +229,46 @@ class KeyborgCore implements Disposable {
   private _onKeyDown = (e: KeyboardEvent): void => {
     const isNavigatingWithKeyboard = _state.getVal();
 
-    const keyCode = e.keyCode;
-    const triggerKeys = this._triggerKeys;
-
-    if (
-      !isNavigatingWithKeyboard &&
-      (!triggerKeys || triggerKeys.has(keyCode))
-    ) {
-      const activeElement = this._win?.document.activeElement as
-        | HTMLElement
-        | null
-        | undefined;
-
-      if (
-        activeElement &&
-        (activeElement.tagName === "INPUT" ||
-          activeElement.tagName === "TEXTAREA" ||
-          activeElement.contentEditable === "true")
-      ) {
-        // We're inside an input, textarea or contenteditable, it's not
-        // keyboard navigation, it is text editing scenario.
-        return;
+    if (isNavigatingWithKeyboard) {
+      if (this._shouldDismissKeyboardNavigation(e)) {
+        this._scheduleDismiss();
       }
-
-      _state.setVal(true);
-    } else if (isNavigatingWithKeyboard && this._dismissKeys?.has(keyCode)) {
-      this._scheduleDismiss();
+    } else {
+      if (this._shouldTriggerKeyboardNavigation(e)) {
+        _state.setVal(true);
+      }
     }
   };
+
+  /**
+   * @returns whether the keyboard event should trigger keyboard navigation mode
+   */
+  private _shouldTriggerKeyboardNavigation(e: KeyboardEvent) {
+    // TODO Some rich text fields can allow Tab key for indentation so it doesn't
+    // need to be a navigation key. If there is a bug regarding that we should revisit
+    if (e.key === "Tab") {
+      return true;
+    }
+
+    const activeElement = this._win?.document
+      .activeElement as HTMLElement | null;
+    const isTriggerKey = !this._triggerKeys || this._triggerKeys.has(e.keyCode);
+
+    const isEditable =
+      activeElement &&
+      (activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "TEXTAREA" ||
+        activeElement.isContentEditable);
+
+    return isTriggerKey && !isEditable;
+  }
+
+  /**
+   * @returns whether the keyboard event should dismiss keyboard navigation mode
+   */
+  private _shouldDismissKeyboardNavigation(e: KeyboardEvent) {
+    return this._dismissKeys?.has(e.keyCode);
+  }
 
   private _scheduleDismiss(): void {
     const win = this._win;
