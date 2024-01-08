@@ -24,7 +24,7 @@ export const Buttons = () => (
 
 export const Input = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-    <h1>Focus Behavior with Buttons</h1>
+    <h1>Focus Behavior with input</h1>
 
     <div
       style={{ border: "2px solid blue", display: "flex", gap: 5, padding: 20 }}
