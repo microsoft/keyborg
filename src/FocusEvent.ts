@@ -118,7 +118,7 @@ export function setupFocusEvent(win: Window): void {
       composed: true,
       detail: {
         originalEvent: e,
-      }
+      },
     });
 
     target.dispatchEvent(event);
@@ -154,7 +154,11 @@ export function setupFocusEvent(win: Window): void {
     onFocusIn(target, (e.relatedTarget as HTMLElement | null) || undefined);
   };
 
-  const onFocusIn = (target: Element, relatedTarget?: HTMLElement, originalEvent?: FocusEvent) => {
+  const onFocusIn = (
+    target: Element,
+    relatedTarget?: HTMLElement,
+    originalEvent?: FocusEvent,
+  ) => {
     const shadowRoot = target.shadowRoot;
 
     if (shadowRoot) {
@@ -211,11 +215,7 @@ export function setupFocusEvent(win: Window): void {
       }
 
       shadowRoot.addEventListener("focusin", focusInHandler, true);
-      shadowRoot.addEventListener(
-        "focusout",
-        focusOutHandler,
-        true,
-      );
+      shadowRoot.addEventListener("focusout", focusOutHandler, true);
 
       shadowTargets.add(shadowRoot);
 
@@ -317,8 +317,16 @@ export function disposeFocusEvent(win: Window): void {
     );
 
     for (const shadow of keyborgNativeFocusEvent.shadowTargets) {
-      shadow.removeEventListener("focusin", keyborgNativeFocusEvent.focusInHandler, true);
-      shadow.removeEventListener("focusout", keyborgNativeFocusEvent.focusOutHandler, true);
+      shadow.removeEventListener(
+        "focusin",
+        keyborgNativeFocusEvent.focusInHandler,
+        true,
+      );
+      shadow.removeEventListener(
+        "focusout",
+        keyborgNativeFocusEvent.focusOutHandler,
+        true,
+      );
     }
 
     keyborgNativeFocusEvent.shadowTargets.clear();
