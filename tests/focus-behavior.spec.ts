@@ -30,3 +30,12 @@ test("Buttons scenario", async ({ page }) => {
   await page.getByText("Button B").click();
   await expect(page.getByTestId("keyboard-mode")).toHaveText("false");
 });
+
+test("Input scenario", async ({ page }) => {
+  await page.goto("/?mode=preview&story=focus-behavior--input");
+
+  await expect(page.getByTestId("keyboard-mode")).toHaveText("false");
+  await page.focus("input");
+  await page.keyboard.press("Tab");
+  await expect(page.getByTestId("keyboard-mode")).toHaveText("true");
+});
