@@ -271,6 +271,7 @@ export class Keyborg {
   /**
    * @deprecated no longer used internally
    */
+  // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars, no-empty-function
   static update(instance: Keyborg, isNavigatingWithKeyboard: boolean): void {}
 
   constructor(win: WindowWithKeyborg) {
