@@ -5,7 +5,7 @@
 
 import * as React from "react";
 
-import { KeyboardMode } from "./common/KeyboardMode";
+import { KeyboardMode, createKeyborg } from "./common/KeyboardMode";
 import { ShadowRoot } from "./common/ShadowRoot";
 
 export const Default = () => (
@@ -47,3 +47,43 @@ export const Nested = () => (
     <KeyboardMode />
   </div>
 );
+
+interface WindowWithCreateKeyborg extends Window {
+  createKeyborg?: typeof createKeyborg;
+}
+
+export const Lazy = () => {
+  (window as WindowWithCreateKeyborg).createKeyborg = createKeyborg;
+
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 20 }}
+      data-testid="root"
+    >
+      <div
+        style={{
+          border: "2px solid blue",
+          display: "flex",
+          gap: 5,
+          padding: 20,
+        }}
+      >
+        <button>Light DOM: Button A</button>
+      </div>
+
+      <ShadowRoot data-testid="shadow-root">
+        <button>Shadow DOM: Button A</button>
+        <button>Shadow DOM: Button B</button>
+
+        <ShadowRoot data-testid="nested-shadow-root">
+          <button>Shadow DOM: Button C</button>
+          <button>Shadow DOM: Button D</button>
+        </ShadowRoot>
+
+        <button>Shadow DOM: Button E</button>
+      </ShadowRoot>
+
+      <button>Light DOM: Button B</button>
+    </div>
+  );
+};

@@ -43,3 +43,5 @@ export const Buttons = () => (
     <KeyboardMode />
   </div>
 );
+
+export { createKeyborg };
