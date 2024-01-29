@@ -18,7 +18,7 @@ interface KeyborgFocusEventData {
   focusInHandler: (e: FocusEvent) => void;
   focusOutHandler: (e: FocusEvent) => void;
   lastFocusedProgrammatically?: WeakRefInstance<HTMLElement>;
-  shadowTargets: Set<ShadowRoot>;
+  shadowTargets: Set<WeakRefInstance<ShadowRoot>>;
 }
 
 /**
@@ -102,7 +102,7 @@ export function setupFocusEvent(win: Window): void {
 
   kwin.HTMLElement.prototype.focus = focus;
 
-  const shadowTargets: Set<ShadowRoot> = new Set();
+  const shadowTargets: Set<WeakRefInstance<ShadowRoot>> = new Set();
 
   const focusOutHandler = (e: FocusEvent) => {
     const target = e.target as HTMLElement;
@@ -135,6 +135,7 @@ export function setupFocusEvent(win: Window): void {
       | Node
       | null
       | undefined;
+
     const currentShadows: Set<ShadowRoot> = new Set();
 
     while (node) {
@@ -146,11 +147,16 @@ export function setupFocusEvent(win: Window): void {
       }
     }
 
-    for (const shadowRoot of shadowTargets) {
-      if (!currentShadows.has(shadowRoot)) {
-        shadowRoot.removeEventListener("focusin", focusInHandler, true);
-        shadowRoot.removeEventListener("focusout", focusOutHandler, true);
-        shadowTargets.delete(shadowRoot);
+    for (const shadowRootWeakRef of shadowTargets) {
+      const shadowRoot = shadowRootWeakRef.deref();
+
+      if (!shadowRoot || !currentShadows.has(shadowRoot)) {
+        shadowTargets.delete(shadowRootWeakRef);
+
+        if (shadowRoot) {
+          shadowRoot.removeEventListener("focusin", focusInHandler, true);
+          shadowRoot.removeEventListener("focusout", focusOutHandler, true);
+        }
       }
     }
 
@@ -213,14 +219,16 @@ export function setupFocusEvent(win: Window): void {
        *         > focused element ✅ (no shadow root - dispatch keyborg event)
        */
 
-      if (shadowTargets.has(shadowRoot)) {
-        return;
+      for (const shadowRootWeakRef of shadowTargets) {
+        if (shadowRootWeakRef.deref() === shadowRoot) {
+          return;
+        }
       }
 
       shadowRoot.addEventListener("focusin", focusInHandler, true);
       shadowRoot.addEventListener("focusout", focusOutHandler, true);
 
-      shadowTargets.add(shadowRoot);
+      shadowTargets.add(new WeakRefInstance(shadowRoot));
 
       return;
     }
@@ -319,17 +327,21 @@ export function disposeFocusEvent(win: Window): void {
       true,
     );
 
-    for (const shadow of keyborgNativeFocusEvent.shadowTargets) {
-      shadow.removeEventListener(
-        "focusin",
-        keyborgNativeFocusEvent.focusInHandler,
-        true,
-      );
-      shadow.removeEventListener(
-        "focusout",
-        keyborgNativeFocusEvent.focusOutHandler,
-        true,
-      );
+    for (const shadowRootWeakRef of keyborgNativeFocusEvent.shadowTargets) {
+      const shadowRoot = shadowRootWeakRef.deref();
+
+      if (shadowRoot) {
+        shadowRoot.removeEventListener(
+          "focusin",
+          keyborgNativeFocusEvent.focusInHandler,
+          true,
+        );
+        shadowRoot.removeEventListener(
+          "focusout",
+          keyborgNativeFocusEvent.focusOutHandler,
+          true,
+        );
+      }
     }
 
     keyborgNativeFocusEvent.shadowTargets.clear();
