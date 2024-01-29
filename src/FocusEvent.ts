@@ -5,6 +5,7 @@
 import { WeakRefInstance } from "./WeakRefInstance";
 
 export const KEYBORG_FOCUSIN = "keyborg:focusin";
+export const KEYBORG_FOCUSOUT = "keyborg:focusout";
 
 interface KeyborgFocus {
   /**
@@ -15,7 +16,9 @@ interface KeyborgFocus {
 
 interface KeyborgFocusEventData {
   focusInHandler: (e: FocusEvent) => void;
+  focusOutHandler: (e: FocusEvent) => void;
   lastFocusedProgrammatically?: WeakRefInstance<HTMLElement>;
+  shadowTargets: Set<WeakRefInstance<ShadowRoot>>;
 }
 
 /**
@@ -50,6 +53,7 @@ let _canOverrideNativeFocus = false;
 export interface KeyborgFocusInEventDetails {
   relatedTarget?: HTMLElement;
   isFocusedProgrammatically?: boolean;
+  originalEvent?: FocusEvent;
 }
 
 export interface KeyborgFocusInEvent
@@ -59,6 +63,12 @@ export interface KeyborgFocusInEvent
    */
   details?: KeyborgFocusInEventDetails;
 }
+
+export interface KeyborgFocusOutEventDetails {
+  originalEvent: FocusEvent;
+}
+
+export type KeyborgFocusOutEvent = CustomEvent<KeyborgFocusOutEventDetails>;
 
 /**
  * Guarantees that the native `focus` will be used
@@ -92,19 +102,26 @@ export function setupFocusEvent(win: Window): void {
 
   kwin.HTMLElement.prototype.focus = focus;
 
-  const focusOutShadowRootHandler = (e: FocusEvent) => {
-    const relatedTarget = e.relatedTarget as HTMLElement | null;
-    const currentTarget = e.currentTarget as ShadowRoot;
+  const shadowTargets: Set<WeakRefInstance<ShadowRoot>> = new Set();
 
-    // cleanup polyfill event handlers once focus leaves the shadow root
-    if (!currentTarget.contains(relatedTarget)) {
-      currentTarget.removeEventListener("focusin", focusInHandler, true);
-      currentTarget.removeEventListener(
-        "focusout",
-        focusOutShadowRootHandler,
-        true,
-      );
+  const focusOutHandler = (e: FocusEvent) => {
+    const target = e.target as HTMLElement;
+
+    if (!target) {
+      return;
     }
+
+    const event: KeyborgFocusOutEvent = new CustomEvent(KEYBORG_FOCUSOUT, {
+      cancelable: true,
+      bubbles: true,
+      // Allows the event to bubble past an open shadow root
+      composed: true,
+      detail: {
+        originalEvent: e,
+      },
+    });
+
+    target.dispatchEvent(event);
   };
 
   const focusInHandler = (e: FocusEvent) => {
@@ -114,26 +131,65 @@ export function setupFocusEvent(win: Window): void {
       return;
     }
 
-    if (target.shadowRoot) {
+    let node: Node | null | undefined = e.composedPath()[0] as
+      | Node
+      | null
+      | undefined;
+
+    const currentShadows: Set<ShadowRoot> = new Set();
+
+    while (node) {
+      if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+        currentShadows.add(node as ShadowRoot);
+        node = (node as ShadowRoot).host;
+      } else {
+        node = node.parentNode;
+      }
+    }
+
+    for (const shadowRootWeakRef of shadowTargets) {
+      const shadowRoot = shadowRootWeakRef.deref();
+
+      if (!shadowRoot || !currentShadows.has(shadowRoot)) {
+        shadowTargets.delete(shadowRootWeakRef);
+
+        if (shadowRoot) {
+          shadowRoot.removeEventListener("focusin", focusInHandler, true);
+          shadowRoot.removeEventListener("focusout", focusOutHandler, true);
+        }
+      }
+    }
+
+    onFocusIn(target, (e.relatedTarget as HTMLElement | null) || undefined);
+  };
+
+  const onFocusIn = (
+    target: Element,
+    relatedTarget?: HTMLElement,
+    originalEvent?: FocusEvent,
+  ) => {
+    const shadowRoot = target.shadowRoot;
+
+    if (shadowRoot) {
       /**
        * https://bugs.chromium.org/p/chromium/issues/detail?id=1512028
        * focusin events don't bubble up through an open shadow root once focus is inside
        * once focus moves into a shadow root - we drop the same focusin handler there
        * keyborg's custom event will still bubble up since it is composed
        * event handlers should be cleaned up once focus leaves the shadow root.
-       * 
+       *
        * When a focusin event is dispatched from a shadow root, its target is the shadow root parent.
        * Each shadow root encounter requires a new capture listener.
        * Why capture? - we want to follow the focus event in order or descending nested shadow roots
        * When there are no more shadow root targets - dispatch the keyborg:focusin event
-       * 
+       *
        * 1. no focus event
        * > document - capture listener ✅
        *   > shadow root 1
        *     > shadow root 2
        *       > shadow root 3
        *         > focused element
-       * 
+       *
        * 2. focus event received by document listener
        * > document - capture listener ✅ (focus event here)
        *   > shadow root 1 - capture listener ✅
@@ -152,9 +208,9 @@ export function setupFocusEvent(win: Window): void {
        * > document - capture listener ✅
        *   > shadow root 1 - capture listener ✅
        *     > shadow root 2 - capture listener ✅ (focus event here)
-       *       > shadow root 3 - capture listener ✅ 
+       *       > shadow root 3 - capture listener ✅
        *         > focused element
-       * 
+       *
        * 5. focus event received by root l3 listener, no more shadow root targets
        * > document - capture listener ✅
        *   > shadow root 1 - capture listener ✅
@@ -162,18 +218,24 @@ export function setupFocusEvent(win: Window): void {
        *       > shadow root 3 - capture listener ✅ (focus event here)
        *         > focused element ✅ (no shadow root - dispatch keyborg event)
        */
-      target.shadowRoot.addEventListener("focusin", focusInHandler, true);
-      target.shadowRoot.addEventListener(
-        "focusout",
-        focusOutShadowRootHandler,
-        true,
-      );
+
+      for (const shadowRootWeakRef of shadowTargets) {
+        if (shadowRootWeakRef.deref() === shadowRoot) {
+          return;
+        }
+      }
+
+      shadowRoot.addEventListener("focusin", focusInHandler, true);
+      shadowRoot.addEventListener("focusout", focusOutHandler, true);
+
+      shadowTargets.add(new WeakRefInstance(shadowRoot));
 
       return;
     }
 
     const details: KeyborgFocusInEventDetails = {
-      relatedTarget: (e.relatedTarget as HTMLElement) || undefined,
+      relatedTarget,
+      originalEvent,
     };
 
     const event: KeyborgFocusInEvent = new CustomEvent(KEYBORG_FOCUSIN, {
@@ -199,11 +261,19 @@ export function setupFocusEvent(win: Window): void {
 
   const data: KeyborgFocusEventData = (kwin.__keyborgData = {
     focusInHandler,
+    focusOutHandler,
+    shadowTargets,
   });
 
   kwin.document.addEventListener(
     "focusin",
     kwin.__keyborgData.focusInHandler,
+    true,
+  );
+
+  kwin.document.addEventListener(
+    "focusout",
+    kwin.__keyborgData.focusOutHandler,
     true,
   );
 
@@ -219,6 +289,16 @@ export function setupFocusEvent(win: Window): void {
 
     // eslint-disable-next-line prefer-rest-params
     return origFocus.apply(this, arguments);
+  }
+
+  let activeElement = kwin.document.activeElement as Element | null;
+
+  // If keyborg is created with the focus inside shadow root, we need
+  // to go through the shadows up to make sure all relevant shadows
+  // have focus handlers attached.
+  while (activeElement && activeElement.shadowRoot) {
+    onFocusIn(activeElement);
+    activeElement = activeElement.shadowRoot.activeElement;
   }
 
   (focus as KeyborgFocus).__keyborgNativeFocus = origFocus;
@@ -240,6 +320,32 @@ export function disposeFocusEvent(win: Window): void {
       keyborgNativeFocusEvent.focusInHandler,
       true,
     );
+
+    kwin.document.removeEventListener(
+      "focusout",
+      keyborgNativeFocusEvent.focusOutHandler,
+      true,
+    );
+
+    for (const shadowRootWeakRef of keyborgNativeFocusEvent.shadowTargets) {
+      const shadowRoot = shadowRootWeakRef.deref();
+
+      if (shadowRoot) {
+        shadowRoot.removeEventListener(
+          "focusin",
+          keyborgNativeFocusEvent.focusInHandler,
+          true,
+        );
+        shadowRoot.removeEventListener(
+          "focusout",
+          keyborgNativeFocusEvent.focusOutHandler,
+          true,
+        );
+      }
+    }
+
+    keyborgNativeFocusEvent.shadowTargets.clear();
+
     delete kwin.__keyborgData;
   }
 
