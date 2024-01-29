@@ -83,7 +83,7 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
   await page.goto("/?mode=preview&story=shadow-dom--lazy");
 
   // Click the button [nav by mouse in shadow DOM]
-  await page.getByText("Shadow DOM: Button A").click();
+  await page.getByText("Shadow DOM: Button C").click();
 
   await page.evaluate(() => {
     // Creating keyborg when the focus is inside ShadowDOM. Then moving the focus.
@@ -111,8 +111,8 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
 
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("shadow-root").locator("*:focus"),
-  ).toHaveText("Shadow DOM: Button B");
+    await page.getByTestId("nested-shadow-root").locator("*:focus"),
+  ).toHaveText("Shadow DOM: Button D");
 
   let keyborgFocusInCounter = await page.evaluate(
     () => (window as WindowWithKeyborgFocus).__keyborgFocusInCounter,
@@ -126,8 +126,8 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
 
   await page.keyboard.press("Tab");
   await expect(
-    await page.getByTestId("nested-shadow-root").locator("*:focus"),
-  ).toHaveText("Shadow DOM: Button C");
+    await page.getByTestId("shadow-root").locator("*:focus"),
+  ).toHaveText("Shadow DOM: Button E");
 
   keyborgFocusInCounter = await page.evaluate(
     () => (window as WindowWithKeyborgFocus).__keyborgFocusInCounter,
@@ -136,10 +136,10 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
     () => (window as WindowWithKeyborgFocus).__keyborgFocusOutCounter,
   );
   expect(keyborgFocusInCounter).toBe(2);
-  expect(keyborgFocusOutCounter).toBe(2);
+  // TODO: Think about triggering keyborg:focusout for ShadowDOM root,
+  // currently we get blur events for ShadowRoot too.
+  expect(keyborgFocusOutCounter).toBe(3);
 
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
 
   await expect(await page.getByTestId("root").locator("*:focus")).toHaveText(
@@ -152,9 +152,10 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
   keyborgFocusOutCounter = await page.evaluate(
     () => (window as WindowWithKeyborgFocus).__keyborgFocusOutCounter,
   );
-  expect(keyborgFocusInCounter).toBe(5);
-  // TODO: Think about triggering keyborg:focusout for ShadowDOM root.
-  expect(keyborgFocusOutCounter).toBe(7);
+  expect(keyborgFocusInCounter).toBe(3);
+  // TODO: Think about triggering keyborg:focusout for ShadowDOM root,
+  // currently we get blur events for ShadowRoot too.
+  expect(keyborgFocusOutCounter).toBe(5);
 });
 
 test("navigation between parallel nested shadow roots", async ({
