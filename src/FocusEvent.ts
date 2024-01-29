@@ -131,7 +131,10 @@ export function setupFocusEvent(win: Window): void {
       return;
     }
 
-    let node: Node | null = target;
+    let node: Node | null | undefined = e.composedPath()[0] as
+      | Node
+      | null
+      | undefined;
     const currentShadows: Set<ShadowRoot> = new Set();
 
     while (node) {
@@ -143,11 +146,11 @@ export function setupFocusEvent(win: Window): void {
       }
     }
 
-    for (const shadow of shadowTargets) {
-      if (!currentShadows.has(shadow)) {
-        shadow.removeEventListener("focusin", focusInHandler, true);
-        shadow.removeEventListener("focusout", focusOutHandler, true);
-        shadowTargets.delete(shadow);
+    for (const shadowRoot of shadowTargets) {
+      if (!currentShadows.has(shadowRoot)) {
+        shadowRoot.removeEventListener("focusin", focusInHandler, true);
+        shadowRoot.removeEventListener("focusout", focusOutHandler, true);
+        shadowTargets.delete(shadowRoot);
       }
     }
 

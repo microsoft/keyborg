@@ -156,3 +156,97 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
   // TODO: Think about triggering keyborg:focusout for ShadowDOM root.
   expect(keyborgFocusOutCounter).toBe(7);
 });
+
+test("navigation between parallel nested shadow roots", async ({
+  page,
+  browser,
+}) => {
+  let log: string[] = [];
+  const logCall = (msg: string) => log.push(msg);
+
+  await page.exposeFunction("logCall", logCall);
+
+  await page.addInitScript(() => {
+    const origAddEventListener = ShadowRoot.prototype.addEventListener;
+    const origRemoveEventListener = ShadowRoot.prototype.removeEventListener;
+
+    ShadowRoot.prototype.addEventListener = function (
+      name: string,
+      ...rest: unknown[]
+    ) {
+      logCall(
+        `addEventListener: ${name} ${this.host.getAttribute("data-testid")}`,
+      );
+      return origAddEventListener.call(this, name, ...rest);
+    };
+
+    ShadowRoot.prototype.removeEventListener = function (
+      name: string,
+      ...rest: unknown[]
+    ) {
+      logCall(
+        `removeEventListener: ${name} ${this.host.getAttribute("data-testid")}`,
+      );
+      return origRemoveEventListener.call(this, name, ...rest);
+    };
+  });
+
+  await page.goto("/?mode=preview&story=shadow-dom--parallel-nested");
+
+  await page.getByText("Light DOM: Button A").click();
+
+  log = [];
+
+  await page.getByText("Shadow DOM: Button A").click();
+
+  expect(log).toEqual([
+    "addEventListener: focusin shadow-root-level-1",
+    "addEventListener: focusout shadow-root-level-1",
+    "addEventListener: focusin shadow-root-level-2",
+    "addEventListener: focusout shadow-root-level-2",
+    "addEventListener: focusin shadow-root-level-3a",
+    "addEventListener: focusout shadow-root-level-3a",
+  ]);
+
+  log = [];
+
+  await page.getByText("Shadow DOM: Button B").click();
+
+  expect(log).toEqual([
+    "removeEventListener: focusin shadow-root-level-3a",
+    "removeEventListener: focusout shadow-root-level-3a",
+    "addEventListener: focusin shadow-root-level-3b",
+    "addEventListener: focusout shadow-root-level-3b",
+  ]);
+
+  log = [];
+
+  // Deactivating the page.
+  await browser.newPage();
+  // Focusing the page back.
+  await page.bringToFront();
+
+  expect(log).toEqual([]);
+
+  await page.getByText("Shadow DOM: Button A").click();
+
+  expect(log).toEqual([
+    "removeEventListener: focusin shadow-root-level-3b",
+    "removeEventListener: focusout shadow-root-level-3b",
+    "addEventListener: focusin shadow-root-level-3a",
+    "addEventListener: focusout shadow-root-level-3a",
+  ]);
+
+  log = [];
+
+  await page.getByText("Light DOM: Button A").click();
+
+  expect(log).toEqual([
+    "removeEventListener: focusin shadow-root-level-1",
+    "removeEventListener: focusout shadow-root-level-1",
+    "removeEventListener: focusin shadow-root-level-2",
+    "removeEventListener: focusout shadow-root-level-2",
+    "removeEventListener: focusin shadow-root-level-3a",
+    "removeEventListener: focusout shadow-root-level-3a",
+  ]);
+});

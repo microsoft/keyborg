@@ -87,3 +87,32 @@ export const Lazy = () => {
     </div>
   );
 };
+
+export const ParallelNested = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div
+      style={{
+        border: "2px solid blue",
+        display: "flex",
+        gap: 5,
+        padding: 20,
+      }}
+    >
+      <button>Light DOM: Button A</button>
+    </div>
+
+    <ShadowRoot data-testid="shadow-root-level-1">
+      <ShadowRoot data-testid="shadow-root-level-2">
+        <ShadowRoot data-testid="shadow-root-level-3a">
+          <button>Shadow DOM: Button A</button>
+        </ShadowRoot>
+
+        <ShadowRoot data-testid="shadow-root-level-3b">
+          <button>Shadow DOM: Button B</button>
+        </ShadowRoot>
+      </ShadowRoot>
+    </ShadowRoot>
+
+    <KeyboardMode />
+  </div>
+);
