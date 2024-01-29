@@ -9,7 +9,7 @@ import {
   KEYBORG_FOCUSIN,
   setupFocusEvent,
 } from "./FocusEvent";
-import { Disposable, WeakRefInstance } from "./WeakRefInstance";
+import { Disposable } from "./WeakRefInstance";
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {
@@ -35,56 +35,6 @@ export interface KeyborgProps {
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
 /**
- * Source of truth for all the keyborg core instances and the current keyboard navigation state
- */
-export class KeyborgState {
-  private __keyborgCoreRefs: { [id: string]: WeakRefInstance<KeyborgCore> } =
-    {};
-  private _isNavigatingWithKeyboard = false;
-
-  add(keyborg: KeyborgCore): void {
-    const id = keyborg.id;
-
-    if (!(id in this.__keyborgCoreRefs)) {
-      this.__keyborgCoreRefs[id] = new WeakRefInstance<KeyborgCore>(keyborg);
-    }
-  }
-
-  remove(id: string): void {
-    delete this.__keyborgCoreRefs[id];
-
-    if (Object.keys(this.__keyborgCoreRefs).length === 0) {
-      this._isNavigatingWithKeyboard = false;
-    }
-  }
-
-  setVal(isNavigatingWithKeyboard: boolean): void {
-    if (this._isNavigatingWithKeyboard === isNavigatingWithKeyboard) {
-      return;
-    }
-
-    this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
-
-    for (const id of Object.keys(this.__keyborgCoreRefs)) {
-      const ref = this.__keyborgCoreRefs[id];
-      const keyborg = ref.deref();
-
-      if (keyborg) {
-        keyborg.update(isNavigatingWithKeyboard);
-      } else {
-        this.remove(id);
-      }
-    }
-  }
-
-  getVal(): boolean {
-    return this._isNavigatingWithKeyboard;
-  }
-}
-
-const _state = new KeyborgState();
-
-/**
  * Manages a collection of Keyborg instances in a window/document and updates keyborg state
  */
 class KeyborgCore implements Disposable {
@@ -95,6 +45,7 @@ class KeyborgCore implements Disposable {
   private _dismissTimer: number | undefined;
   private _triggerKeys?: Set<number>;
   private _dismissKeys?: Set<number>;
+  private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
     this.id = "c" + ++_lastId;
@@ -119,8 +70,17 @@ class KeyborgCore implements Disposable {
     win.addEventListener("keydown", this._onKeyDown, true); // Capture!
 
     setupFocusEvent(win);
+  }
 
-    _state.add(this);
+  get isNavigatingWithKeyboard() {
+    return this._isNavigatingWithKeyboard_DO_NOT_USE;
+  }
+
+  set isNavigatingWithKeyboard(val: boolean) {
+    if (this._isNavigatingWithKeyboard_DO_NOT_USE !== val) {
+      this._isNavigatingWithKeyboard_DO_NOT_USE = val;
+      this.update();
+    }
   }
 
   dispose(): void {
@@ -146,8 +106,6 @@ class KeyborgCore implements Disposable {
       win.removeEventListener("keydown", this._onKeyDown, true); // Capture!
 
       delete this._win;
-
-      _state.remove(this.id);
     }
   }
 
@@ -158,12 +116,12 @@ class KeyborgCore implements Disposable {
   /**
    * Updates all keyborg instances with the keyboard navigation state
    */
-  update(isNavigatingWithKeyboard: boolean): void {
+  update(): void {
     const keyborgs = this._win?.__keyborg?.refs;
 
     if (keyborgs) {
       for (const id of Object.keys(keyborgs)) {
-        Keyborg.update(keyborgs[id], isNavigatingWithKeyboard);
+        Keyborg.update(keyborgs[id], this.isNavigatingWithKeyboard);
       }
     }
   }
@@ -179,7 +137,7 @@ class KeyborgCore implements Disposable {
       return;
     }
 
-    if (_state.getVal()) {
+    if (this.isNavigatingWithKeyboard) {
       return;
     }
 
@@ -198,7 +156,7 @@ class KeyborgCore implements Disposable {
       return;
     }
 
-    _state.setVal(true);
+    this.isNavigatingWithKeyboard = true;
   };
 
   private _onMouseDown = (e: MouseEvent): void => {
@@ -223,11 +181,11 @@ class KeyborgCore implements Disposable {
       }, 1000); // Keeping the indication of the mouse usage for some time.
     }
 
-    _state.setVal(false);
+    this.isNavigatingWithKeyboard = false;
   };
 
   private _onKeyDown = (e: KeyboardEvent): void => {
-    const isNavigatingWithKeyboard = _state.getVal();
+    const isNavigatingWithKeyboard = this.isNavigatingWithKeyboard;
 
     if (isNavigatingWithKeyboard) {
       if (this._shouldDismissKeyboardNavigation(e)) {
@@ -235,7 +193,7 @@ class KeyborgCore implements Disposable {
       }
     } else {
       if (this._shouldTriggerKeyboardNavigation(e)) {
-        _state.setVal(true);
+        this.isNavigatingWithKeyboard = true;
       }
     }
   };
@@ -289,7 +247,7 @@ class KeyborgCore implements Disposable {
         if (was && cur && was === cur) {
           // Esc was pressed, currently focused element hasn't changed.
           // Just dismiss the keyboard navigation mode.
-          _state.setVal(false);
+          this.isNavigatingWithKeyboard = false;
         }
       }, _dismissTimeout);
     }
@@ -364,7 +322,7 @@ export class Keyborg {
    * @returns Whether the user is navigating with keyboard
    */
   isNavigatingWithKeyboard(): boolean {
-    return _state.getVal();
+    return !!this._core?.isNavigatingWithKeyboard;
   }
 
   /**
@@ -389,7 +347,9 @@ export class Keyborg {
    * Manually set the keyboard navigtion state
    */
   setVal(isNavigatingWithKeyboard: boolean): void {
-    _state.setVal(isNavigatingWithKeyboard);
+    if (this._core) {
+      this._core.isNavigatingWithKeyboard = isNavigatingWithKeyboard;
+    }
   }
 }
 
