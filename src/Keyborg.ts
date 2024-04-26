@@ -41,7 +41,7 @@ class KeyborgCore implements Disposable {
   readonly id: string;
 
   private _win?: WindowWithKeyborg;
-  private _isMouseUsedTimer: number | undefined;
+  private _isMouseOrTouchUsedTimer: number | undefined;
   private _dismissTimer: number | undefined;
   private _triggerKeys?: Set<number>;
   private _dismissKeys?: Set<number>;
@@ -69,6 +69,10 @@ class KeyborgCore implements Disposable {
     doc.addEventListener("mousedown", this._onMouseDown, true); // Capture!
     win.addEventListener("keydown", this._onKeyDown, true); // Capture!
 
+    doc.addEventListener("touchstart", this._onMouseOrTouch, true); // Capture!
+    doc.addEventListener("touchend", this._onMouseOrTouch, true); // Capture!
+    doc.addEventListener("touchcancel", this._onMouseOrTouch, true); // Capture!
+
     setupFocusEvent(win);
   }
 
@@ -87,9 +91,9 @@ class KeyborgCore implements Disposable {
     const win = this._win;
 
     if (win) {
-      if (this._isMouseUsedTimer) {
-        win.clearTimeout(this._isMouseUsedTimer);
-        this._isMouseUsedTimer = undefined;
+      if (this._isMouseOrTouchUsedTimer) {
+        win.clearTimeout(this._isMouseOrTouchUsedTimer);
+        this._isMouseOrTouchUsedTimer = undefined;
       }
 
       if (this._dismissTimer) {
@@ -104,6 +108,10 @@ class KeyborgCore implements Disposable {
       doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true); // Capture!
       doc.removeEventListener("mousedown", this._onMouseDown, true); // Capture!
       win.removeEventListener("keydown", this._onKeyDown, true); // Capture!
+
+      doc.removeEventListener("touchstart", this._onMouseOrTouch, true); // Capture!
+      doc.removeEventListener("touchend", this._onMouseOrTouch, true); // Capture!
+      doc.removeEventListener("touchcancel", this._onMouseOrTouch, true); // Capture!
 
       delete this._win;
     }
@@ -132,8 +140,8 @@ class KeyborgCore implements Disposable {
     // the events when the screen reader shortcuts are used). The screen reader
     // usage is keyboard navigation.
 
-    if (this._isMouseUsedTimer) {
-      // There was a mouse event recently.
+    if (this._isMouseOrTouchUsedTimer) {
+      // There was a mouse or touch event recently.
       return;
     }
 
@@ -169,16 +177,20 @@ class KeyborgCore implements Disposable {
       return;
     }
 
+    this._onMouseOrTouch();
+  };
+
+  private _onMouseOrTouch = (): void => {
     const win = this._win;
 
     if (win) {
-      if (this._isMouseUsedTimer) {
-        win.clearTimeout(this._isMouseUsedTimer);
+      if (this._isMouseOrTouchUsedTimer) {
+        win.clearTimeout(this._isMouseOrTouchUsedTimer);
       }
 
-      this._isMouseUsedTimer = win.setTimeout(() => {
-        delete this._isMouseUsedTimer;
-      }, 1000); // Keeping the indication of the mouse usage for some time.
+      this._isMouseOrTouchUsedTimer = win.setTimeout(() => {
+        delete this._isMouseOrTouchUsedTimer;
+      }, 1000); // Keeping the indication of mouse or touch usage for some time.
     }
 
     this.isNavigatingWithKeyboard = false;
