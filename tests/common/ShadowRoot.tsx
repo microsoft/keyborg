@@ -6,12 +6,13 @@
 import * as React from "react";
 import root from "react-shadow";
 
-export const ShadowRoot: React.FC<{ children: React.ReactNode }> = ({
-  children,
-  ...rest
-}) => {
+export const ShadowRoot: React.FC<{
+  children: React.ReactNode;
+  tabIndex?: number;
+}> = ({ children, tabIndex, ...rest }) => {
   return (
     <root.div
+      tabIndex={tabIndex}
       {...rest}
       style={{
         border: "2px solid magenta",
