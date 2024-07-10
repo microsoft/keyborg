@@ -291,8 +291,8 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
     this._win = win;
+    this._id = this.createId(win);
 
     const current = win.__keyborg;
 
@@ -306,6 +306,25 @@ export class Keyborg {
         refs: { [this._id]: this },
       };
     }
+  }
+
+  /**
+   * creates an id that will be truly global core instance
+   * @returns global id for the keyborg instance
+   */
+  private createId(win: WindowWithKeyborg) {
+    const current = win.__keyborg;
+    let id = "k" + ++_lastId;
+    if (!current) {
+      return id;
+    }
+
+    // other bundles might have created keyborg instances before this one
+    while (current.refs[id]) {
+      id = "k" + ++_lastId;
+    }
+
+    return id;
   }
 
   private dispose(): void {
