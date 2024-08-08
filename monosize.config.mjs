@@ -10,9 +10,9 @@ const dirname = new URL(".", import.meta.url).pathname;
 const config = {
   repository: "https://github.com/microsoft/keyborg",
   storage: createAzureStorage({
-    authType: 'AzurePipelinesCredential',
-    endpoint: 'https://fluent-bundlesize.azurewebsites.net/api/keyborglatest',
-    tableName: 'keyborglatest',
+    authType: "AzurePipelinesCredential",
+    endpoint: "https://fluent-bundlesize.azurewebsites.net/api/keyborglatest",
+    tableName: "keyborglatest",
   }),
   bundler: webpackBundler((config) => {
     config.resolve = {
