@@ -1,70 +1,70 @@
-# pr:
-#   - main
+pr:
+  - main
 
-# trigger:
-#   - main
+trigger:
+  - main
 
-# variables:
-#   ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/')) }}:
-#     isPR: true
-#   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}:
-#     isPR: false
+variables:
+  ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/')) }}:
+    isPR: true
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}:
+    isPR: false
 
-# jobs:
-#   - job: Bundle_Size
-#     workspace:
-#       clean: all
-#     pool: '1ES-Host-Ubuntu'
-#     steps:
-#       - task: NodeTool@0
-#         inputs:
-#           versionSpec: '18.16.0'
-#           checkLatest: false
-#         displayName: 'Install Node.js'
+jobs:
+  - job: Bundle_Size
+    workspace:
+      clean: all
+    pool: '1ES-Host-Ubuntu'
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '18.16.0'
+          checkLatest: false
+        displayName: 'Install Node.js'
       
-#       - script: |
-#           npm ci
-#         displayName: Install dependencies
+      - script: |
+          npm ci
+        displayName: Install dependencies
 
-#       - script: |
-#           npm run bundle-size
-#         displayName: Measure bundle size
+      - script: |
+          npm run bundle-size
+        displayName: Measure bundle size
 
-#       #
-#       # Steps for PRs
-#       #
+      #
+      # Steps for "main" branch
+      #
 
-#       - script: |
-#           npx monosize compare-reports --branch=$(System.PullRequest.TargetBranch) --output=markdown --quiet > ./monosize.md --report-files-glob="dist/bundle-size/monosize.json"
-#         displayName: Compare bundle-size with base (PR Only)
-#         condition: eq(variables.isPR, true)
+      - task: AzureCLI@2
+        displayName: Upload results (CI Only)
+        # condition: eq(variables.isPR, false)
+        env:
+          BUNDLESIZE_ACCOUNT_NAME: $(StorageAccount)
+          AZURE_TENANT_ID: $(AzureTenantId)
+          AZURE_CLIENT_ID: $(AzureClientId)
+          AZURE_SERVICE_CONNECTION_ID: $(AzureServiceConnectionId)
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        inputs:
+          azureSubscription: 'Bundlesize Testing'
+          scriptType: bash
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            npx monosize upload-report --branch=$(Build.SourceBranchName) --commit-sha $(Build.SourceVersion) --report-files-glob="dist/bundle-size/monosize.json"
 
-#       - task: GithubPRComment@0
-#         displayName: Post results to PR (PR only)
-#         condition: eq(variables.isPR, true)
-#         inputs:
-#           githubOwner: microsoft
-#           githubRepo: 'keyborg'
-#           blobFilePath: 'monosize.md'
-#           status: 'success'
-#           uniqueId: 'bundleSizeComment6497'
+      #
+      # Steps for PRs
+      #
 
-#       #
-#       # Steps for "main" branch
-#       #
+      - script: |
+          npx monosize compare-reports --branch=$(System.PullRequest.TargetBranch) --output=markdown --quiet > ./monosize.md --report-files-glob="dist/bundle-size/monosize.json"
+        displayName: Compare bundle-size with base (PR Only)
+        condition: eq(variables.isPR, true)
 
-#       - task: AzureCLI@2
-#         displayName: Upload results (CI Only)
-#         condition: eq(variables.isPR, false)
-#         env:
-#           BUNDLESIZE_ACCOUNT_NAME: $(StorageAccount)
-#           AZURE_TENANT_ID: $(AzureTenantId)
-#           AZURE_CLIENT_ID: $(AzureClientId)
-#           AZURE_SERVICE_CONNECTION_ID: $(AzureServiceConnectionId)
-#           SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-#         inputs:
-#           azureSubscription: 'Bundlesize Testing'
-#           scriptType: bash
-#           scriptLocation: 'inlineScript'
-#           inlineScript: |
-#             npx monosize upload-report --branch=$(Build.SourceBranchName) --commit-sha $(Build.SourceVersion) --report-files-glob="dist/bundle-size/monosize.json"
+      - task: GithubPRComment@0
+        displayName: Post results to PR (PR only)
+        condition: eq(variables.isPR, true)
+        inputs:
+          githubOwner: microsoft
+          githubRepo: 'keyborg'
+          blobFilePath: 'monosize.md'
+          status: 'success'
+          uniqueId: 'bundleSizeComment6497'
