@@ -30,25 +30,6 @@ jobs:
           npm run bundle-size
         displayName: Measure bundle size
 
-      #
-      # Steps for "main" branch
-      #
-
-      - task: AzureCLI@2
-        displayName: Upload results (CI Only)
-        # condition: eq(variables.isPR, false)
-        env:
-          BUNDLESIZE_ACCOUNT_NAME: $(StorageAccount)
-          AZURE_TENANT_ID: $(AzureTenantId)
-          AZURE_CLIENT_ID: $(AzureClientId)
-          AZURE_SERVICE_CONNECTION_ID: $(AzureServiceConnectionId)
-          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        inputs:
-          azureSubscription: 'Bundlesize Testing'
-          scriptType: bash
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            npx monosize upload-report --branch=$(Build.SourceBranchName) --commit-sha $(Build.SourceVersion) --report-files-glob="dist/bundle-size/monosize.json"
 
       #
       # Steps for PRs
@@ -68,3 +49,24 @@ jobs:
           blobFilePath: 'monosize.md'
           status: 'success'
           uniqueId: 'bundleSizeComment6497'
+
+
+      #
+      # Steps for "main" branch
+      #
+
+      - task: AzureCLI@2
+        displayName: Upload results (CI Only)
+        condition: eq(variables.isPR, false)
+        env:
+          BUNDLESIZE_ACCOUNT_NAME: $(StorageAccount)
+          AZURE_TENANT_ID: $(AzureTenantId)
+          AZURE_CLIENT_ID: $(AzureClientId)
+          AZURE_SERVICE_CONNECTION_ID: $(AzureServiceConnectionId)
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        inputs:
+          azureSubscription: 'Bundlesize Testing'
+          scriptType: bash
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            npx monosize upload-report --branch=$(Build.SourceBranchName) --commit-sha $(Build.SourceVersion) --report-files-glob="dist/bundle-size/monosize.json"
