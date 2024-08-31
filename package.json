@@ -1,6 +1,6 @@
 {
   "name": "keyborg",
-  "version": "2.152.0-canary.0",
+  "version": "2.153.0-canary.0",
   "description": "Keyboard Navigation Detection for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
