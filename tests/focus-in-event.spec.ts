@@ -66,3 +66,55 @@ test("behavior in shadow roots", async ({ page }) => {
     "focus-visible",
   );
 });
+
+test("behavior in focusable shadow roots", async ({ page }) => {
+  await page.goto("/?story=focus-in-event--nested-focusable-shadow-roots");
+
+  // Click the button [nav by mouse in light DOM]
+  await page.getByText("Light DOM: Button A").click();
+  await expect(await page.getByText("Light DOM: Button A")).not.toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Tab [nav by keyboard to focusable shadow root]
+  await page.keyboard.press("Tab");
+  await expect(await page.getByTestId("focusable-shadow-root-l1")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Tab [nav by keyboard to nested shadow root]
+  await page.keyboard.press("Tab");
+  await expect(await page.getByText("Shadow DOM: Button B")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Tab [nav by keyboard to focusable nested shadow root]
+  await page.keyboard.press("Tab");
+  await expect(await page.getByText("Shadow DOM: Button C")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Tab [nav by keyboard to nested shadow root]
+  await page.keyboard.press("Tab");
+  await expect(await page.getByTestId("focusable-shadow-root-l3")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Shift+Tab [nav back by keyboard to nested shadow root]
+  await page.keyboard.press("Shift+Tab");
+  await expect(await page.getByText("Shadow DOM: Button C")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Shift+Tab [nav back by keyboard to nested shadow root]
+  await page.keyboard.press("Shift+Tab");
+  await expect(await page.getByText("Shadow DOM: Button B")).toHaveClass(
+    "focus-visible",
+  );
+
+  // Press Shift+Tab [nav back by keyboard to shadow root]
+  await page.keyboard.press("Shift+Tab");
+  await expect(await page.getByTestId("focusable-shadow-root-l1")).toHaveClass(
+    "focus-visible",
+  );
+});
