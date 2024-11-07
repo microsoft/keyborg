@@ -11,23 +11,25 @@ jobs:
     if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     permissions:
       pull-requests: write
+      actions: read
+      contents: read
     steps:
-      - name: 'Download artifact'
-        uses: dawidd6/action-download-artifact@v2
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: monosize-report
           path: ./results
-          run_id: ${{ github.event.workflow_run.id }}
-          workflow: ${{ github.event.workflow.id }}
-          workflow_conclusion: success
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Load PR number
         id: pr_number
-        run: echo "::set-output name=id::$(cat pr.txt)"
+        run: echo "id=$(cat pr.txt)" >> $GITHUB_OUTPUT
         working-directory: ./results
 
       - name: 'Comment on PR'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          header: bundle-size-report
           number: ${{ steps.pr_number.outputs.id }}
-          path: ./results/monosize.md
+          path: ./results/monosize-report.md
