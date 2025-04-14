@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@ladle/react": "^4.0.2",
-    "@playwright/test": "^1.40.1",
+    "@playwright/test": "^1.51.1",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "downlevel-dts": "^0.11.0",
@@ -47,7 +47,7 @@
     "monosize": "^0.6.3",
     "monosize-bundler-webpack": "^0.1.5",
     "monosize-storage-azure": "^0.0.15",
-    "playwright": "^1.40.1",
+    "playwright": "^1.51.1",
     "prettier": "^3.1.1",
     "react-shadow": "^20.4.0",
     "release-it": "^17.0.1",
