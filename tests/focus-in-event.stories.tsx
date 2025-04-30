@@ -118,3 +118,32 @@ export const NestedShadowRoots = () => (
     </FocusInListener>
   </div>
 );
+
+export const NestedFocusableShadowRoots = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <FocusInListener>
+      <div
+        style={{
+          border: "2px solid blue",
+          display: "flex",
+          gap: 5,
+          padding: 20,
+        }}
+      >
+        <button>Light DOM: Button A</button>
+      </div>
+
+      <ShadowRoot data-testid="focusable-shadow-root-l1" tabIndex={0}>
+        <button>Shadow DOM: Button B</button>
+
+        <ShadowRoot data-testid="shadow-root-l2">
+          <button>Shadow DOM: Button C</button>
+
+          <ShadowRoot data-testid="focusable-shadow-root-l3" tabIndex={0}>
+            <span>Without focusable child</span>
+          </ShadowRoot>
+        </ShadowRoot>
+      </ShadowRoot>
+    </FocusInListener>
+  </div>
+);
