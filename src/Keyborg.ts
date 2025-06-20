@@ -22,11 +22,12 @@ interface WindowWithKeyborg extends Window {
 const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
 // during _dismissTimeout time, dismiss the keyboard navigation mode.
 
-
 /**
  * Function to get the next unique ID for a Keyborg instance or Core instance.
  */
-function getNextId(keyborg: NonNullable<WindowWithKeyborg["__keyborg"]>): number {
+function getNextId(
+  keyborg: NonNullable<WindowWithKeyborg["__keyborg"]>,
+): number {
   if (keyborg.lastId === undefined) {
     keyborg.lastId = 0;
   }
@@ -38,7 +39,10 @@ function getNextId(keyborg: NonNullable<WindowWithKeyborg["__keyborg"]>): number
  * Ensures that the global keyborg instance is initialized in the window.
  * If it doesn't exist, it creates a new instance incorporating the KeyborgCore instance provided via the coreFactory.
  */
-function ensureGlobalKeyborgInitialized(win: WindowWithKeyborg, coreFactory: () => KeyborgCore): NonNullable<WindowWithKeyborg["__keyborg"]> {
+function ensureGlobalKeyborgInitialized(
+  win: WindowWithKeyborg,
+  coreFactory: () => KeyborgCore,
+): NonNullable<WindowWithKeyborg["__keyborg"]> {
   if (win.__keyborg) {
     return win.__keyborg;
   }
@@ -328,7 +332,10 @@ export class Keyborg {
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
     this._win = win;
 
-    const current = ensureGlobalKeyborgInitialized(win, () => new KeyborgCore(win, props));
+    const current = ensureGlobalKeyborgInitialized(
+      win,
+      () => new KeyborgCore(win, props),
+    );
 
     this._core = current.core;
     this._id = "k_" + getNextId(current);
