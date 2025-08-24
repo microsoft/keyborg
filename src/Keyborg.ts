@@ -48,7 +48,7 @@ class KeyborgCore implements Disposable {
   private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    this.id = "c-" + ++_lastId;
     this._win = win;
     const doc = win.document;
 
@@ -291,7 +291,7 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
+    this._id = "k-" + ++_lastId;
     this._win = win;
 
     const current = win.__keyborg;
