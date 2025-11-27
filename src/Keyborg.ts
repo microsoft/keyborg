@@ -13,6 +13,7 @@ import { Disposable } from "./WeakRefInstance";
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {
+    lastId?: number;
     core: KeyborgCore;
     refs: { [id: string]: Keyborg };
   };
@@ -21,7 +22,44 @@ interface WindowWithKeyborg extends Window {
 const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
 // during _dismissTimeout time, dismiss the keyboard navigation mode.
 
-let _lastId = 0;
+/**
+ * Function to get the next unique ID for a Keyborg instance or Core instance.
+ */
+function getNextId(
+  keyborg: NonNullable<WindowWithKeyborg["__keyborg"]>,
+): number {
+  if (keyborg.lastId === undefined) {
+    keyborg.lastId = 0;
+  }
+
+  return ++keyborg.lastId;
+}
+
+/**
+ * Ensures that the global keyborg instance is initialized in the window.
+ * If it doesn't exist, it creates a new instance incorporating the KeyborgCore instance provided via the coreFactory.
+ */
+function ensureGlobalKeyborgInitialized(
+  win: WindowWithKeyborg,
+  coreFactory: () => KeyborgCore,
+): NonNullable<WindowWithKeyborg["__keyborg"]> {
+  if (win.__keyborg) {
+    return win.__keyborg;
+  }
+
+  const core = coreFactory();
+
+  // Core factory might already register the global keyborg instance so we only need to set it up if it doesn't exist
+  if (!win.__keyborg) {
+    win.__keyborg = {
+      lastId: 0,
+      core,
+      refs: {},
+    };
+  }
+
+  return win.__keyborg;
+}
 
 export interface KeyborgProps {
   // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
@@ -48,7 +86,8 @@ class KeyborgCore implements Disposable {
   private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    const current = ensureGlobalKeyborgInitialized(win, () => this);
+    this.id = "c_" + getNextId(current);
     this._win = win;
     const doc = win.document;
 
@@ -291,21 +330,16 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
     this._win = win;
 
-    const current = win.__keyborg;
+    const current = ensureGlobalKeyborgInitialized(
+      win,
+      () => new KeyborgCore(win, props),
+    );
 
-    if (current) {
-      this._core = current.core;
-      current.refs[this._id] = this;
-    } else {
-      this._core = new KeyborgCore(win, props);
-      win.__keyborg = {
-        core: this._core,
-        refs: { [this._id]: this },
-      };
-    }
+    this._core = current.core;
+    this._id = "k_" + getNextId(current);
+    current.refs[this._id] = this;
   }
 
   private dispose(): void {
