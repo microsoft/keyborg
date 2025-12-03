@@ -15,13 +15,14 @@ interface WindowWithKeyborg extends Window {
   __keyborg?: {
     core: KeyborgCore;
     refs: { [id: string]: Keyborg };
+    lastId?: number;
   };
 }
 
 const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
 // during _dismissTimeout time, dismiss the keyboard navigation mode.
 
-let _lastId = 0;
+const _lastId = 0;
 
 export interface KeyborgProps {
   // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
@@ -48,7 +49,26 @@ class KeyborgCore implements Disposable {
   private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    // Use the shared lastId if it exists, otherwise use the local _lastId
+    let idToUse = _lastId;
+    if (win.__keyborg?.lastId !== undefined) {
+      idToUse = win.__keyborg.lastId;
+    }
+
+    this.id = "c" + ++idToUse;
+
+    // Update the shared lastId
+    if (win.__keyborg) {
+      win.__keyborg.lastId = idToUse;
+    } else if (win.__keyborg === undefined) {
+      // Initialize __keyborg if it doesn't exist
+      win.__keyborg = {
+        core: this,
+        refs: {},
+        lastId: idToUse,
+      };
+    }
+
     this._win = win;
     const doc = win.document;
 
@@ -291,19 +311,36 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
     this._win = win;
 
     const current = win.__keyborg;
 
     if (current) {
+      // Initialize lastId if it doesn't exist in the window object
+      if (current.lastId === undefined) {
+        current.lastId = _lastId;
+      }
+
+      // Ensure refs dictionary is initialized
+      if (!current.refs) {
+        current.refs = {};
+      }
+
+      // Use the shared lastId
+      this._id = "k" + ++current.lastId;
+
       this._core = current.core;
       current.refs[this._id] = this;
     } else {
+      // Initialize a new window.__keyborg object with lastId
+      const newLastId = _lastId + 1;
+      this._id = "k" + newLastId;
+
       this._core = new KeyborgCore(win, props);
       win.__keyborg = {
         core: this._core,
         refs: { [this._id]: this },
+        lastId: newLastId,
       };
     }
   }
