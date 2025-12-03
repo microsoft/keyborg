@@ -15,13 +15,32 @@ interface WindowWithKeyborg extends Window {
   __keyborg?: {
     core: KeyborgCore;
     refs: { [id: string]: Keyborg };
+    _lastId: number;
   };
 }
 
 const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
 // during _dismissTimeout time, dismiss the keyboard navigation mode.
 
-let _lastId = 0;
+/**
+ * Gets the next unique ID from the shared window.__keyborg object.
+ * This ensures compatibility between different bundle versions.
+ */
+function getNextId(win: WindowWithKeyborg): number {
+  if (!win.__keyborg) {
+    // Don't initialize the full object here, just set up _lastId
+    win.__keyborg = {
+      core: undefined as unknown as KeyborgCore,
+      refs: {},
+      _lastId: 0
+    };
+  } else if (typeof win.__keyborg._lastId !== 'number') {
+    // For compatibility with older bundles that don't have _lastId
+    win.__keyborg._lastId = 0;
+  }
+  
+  return ++win.__keyborg._lastId;
+}
 
 export interface KeyborgProps {
   // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
@@ -48,7 +67,7 @@ class KeyborgCore implements Disposable {
   private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    this.id = "c" + getNextId(win);
     this._win = win;
     const doc = win.document;
 
@@ -291,19 +310,24 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
+    this._id = "k" + getNextId(win);
     this._win = win;
 
     const current = win.__keyborg;
 
-    if (current) {
+    if (current && current.core) {
+      // Existing core found
       this._core = current.core;
       current.refs[this._id] = this;
     } else {
+      // No existing core, create new one
       this._core = new KeyborgCore(win, props);
+      // Preserve the _lastId that was set by getNextId
+      const currentLastId = win.__keyborg?._lastId || 0;
       win.__keyborg = {
         core: this._core,
         refs: { [this._id]: this },
+        _lastId: currentLastId,
       };
     }
   }
