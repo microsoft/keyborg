@@ -21,7 +21,17 @@ interface WindowWithKeyborg extends Window {
 const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
 // during _dismissTimeout time, dismiss the keyboard navigation mode.
 
-let _lastId = 0;
+/**
+ * Generates a unique ID with the specified prefix
+ * @param prefix - The prefix for the ID ('k' for Keyborg, 'c' for KeyborgCore)
+ * @returns A unique ID in the format `<prefix>-<number>`
+ */
+function getUniqueId(prefix: string): string {
+  // Use timestamp + counter for uniqueness across instances
+  const timestamp = Date.now();
+  const counter = Math.floor(Math.random() * 10000);
+  return `${prefix}-${timestamp}-${counter}`;
+}
 
 export interface KeyborgProps {
   // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
@@ -48,7 +58,7 @@ class KeyborgCore implements Disposable {
   private _isNavigatingWithKeyboard_DO_NOT_USE = false;
 
   constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
+    this.id = getUniqueId("c");
     this._win = win;
     const doc = win.document;
 
@@ -291,7 +301,7 @@ export class Keyborg {
   }
 
   private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
+    this._id = getUniqueId("k");
     this._win = win;
 
     const current = win.__keyborg;
