@@ -122,6 +122,19 @@ export function setupFocusEvent(win: Window): void {
     });
 
     target.dispatchEvent(event);
+
+    // If focus travels backwards from element inside shadow root to shadow root itself,
+    // there will be no focusin event dispatched for shadow root.
+    // Calling onFocusIn to dispatch KeyborgFocusInEvent for
+    // relatedTarget - element that receives.
+    const relatedTarget = e.relatedTarget as Element;
+
+    if (
+      relatedTarget?.shadowRoot &&
+      relatedTarget.shadowRoot.contains(target)
+    ) {
+      onFocusIn(relatedTarget, target, e, relatedTarget as HTMLElement);
+    }
   };
 
   const focusInHandler = (e: FocusEvent) => {
@@ -135,6 +148,7 @@ export function setupFocusEvent(win: Window): void {
       | Node
       | null
       | undefined;
+    const invocationTarget = node;
 
     const currentShadows: Set<ShadowRoot> = new Set();
 
@@ -145,6 +159,10 @@ export function setupFocusEvent(win: Window): void {
       } else {
         node = node.parentNode;
       }
+    }
+
+    if (target.shadowRoot && invocationTarget === target) {
+      currentShadows.add(target.shadowRoot);
     }
 
     for (const shadowRootWeakRef of shadowTargets) {
@@ -160,13 +178,19 @@ export function setupFocusEvent(win: Window): void {
       }
     }
 
-    onFocusIn(target, (e.relatedTarget as HTMLElement | null) || undefined);
+    onFocusIn(
+      target,
+      (e.relatedTarget as HTMLElement | null) || undefined,
+      e,
+      (invocationTarget as HTMLElement | null) || undefined,
+    );
   };
 
   const onFocusIn = (
     target: Element,
     relatedTarget?: HTMLElement,
     originalEvent?: FocusEvent,
+    invocationTarget?: HTMLElement | null,
   ) => {
     const shadowRoot = target.shadowRoot;
 
@@ -219,18 +243,29 @@ export function setupFocusEvent(win: Window): void {
        *         > focused element ✅ (no shadow root - dispatch keyborg event)
        */
 
+      let registerShadowRoot = true;
       for (const shadowRootWeakRef of shadowTargets) {
         if (shadowRootWeakRef.deref() === shadowRoot) {
-          return;
+          if (target === invocationTarget) {
+            // Skip adding listners when focus comes from child element in shadow DOM
+            registerShadowRoot = false;
+          } else {
+            return;
+          }
         }
       }
 
-      shadowRoot.addEventListener("focusin", focusInHandler, true);
-      shadowRoot.addEventListener("focusout", focusOutHandler, true);
+      if (registerShadowRoot) {
+        shadowRoot.addEventListener("focusin", focusInHandler, true);
+        shadowRoot.addEventListener("focusout", focusOutHandler, true);
 
-      shadowTargets.add(new WeakRefInstance(shadowRoot));
+        shadowTargets.add(new WeakRefInstance(shadowRoot));
+      }
 
-      return;
+      // If shadow root is not the one focused, don't proceed with event dispatch
+      if (target !== invocationTarget) {
+        return;
+      }
     }
 
     const details: KeyborgFocusInEventDetails = {
