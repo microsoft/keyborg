@@ -6,7 +6,7 @@
 import { test, expect } from "@playwright/test";
 
 test("Buttons scenario", async ({ page }) => {
-  await page.goto("/?mode=preview&story=focus-behavior--buttons");
+  await page.goto("/iframe.html?id=focus-behavior--buttons");
 
   await expect(page.getByTestId("keyboard-mode")).toHaveText("false");
 
@@ -32,7 +32,7 @@ test("Buttons scenario", async ({ page }) => {
 });
 
 test("Input scenario", async ({ page }) => {
-  await page.goto("/?mode=preview&story=focus-behavior--input");
+  await page.goto("/iframe.html?id=focus-behavior--input");
 
   await expect(page.getByTestId("keyboard-mode")).toHaveText("false");
   await page.focus("input");

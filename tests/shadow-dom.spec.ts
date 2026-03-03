@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 import { createKeyborg } from "../src";
 
 test("navigation between in shadow DOM", async ({ page }) => {
-  await page.goto("/?mode=preview&story=shadow-dom--default");
+  await page.goto("/iframe.html?id=shadow-dom--default");
 
   // Click the button [nav by mouse in shadow DOM]
   await page.getByText("Shadow DOM: Button A").click();
@@ -26,7 +26,7 @@ test("navigation between in shadow DOM", async ({ page }) => {
 });
 
 test("navigation between light & shadow DOM", async ({ page }) => {
-  await page.goto("/?mode=preview&story=shadow-dom--default");
+  await page.goto("/iframe.html?id=shadow-dom--default");
 
   // Click the button [nav by mouse in light DOM]
   await page.getByText("Light DOM: Button A").click();
@@ -50,7 +50,7 @@ test("navigation between light & shadow DOM", async ({ page }) => {
 });
 
 test("navigation between nested shadow roots", async ({ page }) => {
-  await page.goto("/?mode=preview&story=shadow-dom--nested");
+  await page.goto("/iframe.html?id=shadow-dom--nested");
 
   // Click the button [nav by mouse in shadow DOM]
   await page.getByText("Shadow DOM: Button A").click();
@@ -80,7 +80,7 @@ test("create keyborg when the focus is inside ShadowDOM", async ({ page }) => {
     __keyborgFocusOutCounter?: number;
   }
 
-  await page.goto("/?mode=preview&story=shadow-dom--lazy");
+  await page.goto("/iframe.html?id=shadow-dom--lazy");
 
   // Click the button [nav by mouse in shadow DOM]
   await page.getByText("Shadow DOM: Button C").click();
@@ -192,7 +192,7 @@ test("navigation between parallel nested shadow roots", async ({
     };
   });
 
-  await page.goto("/?mode=preview&story=shadow-dom--parallel-nested");
+  await page.goto("/iframe.html?id=shadow-dom--parallel-nested");
 
   await page.getByText("Light DOM: Button A").click();
 

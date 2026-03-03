@@ -8,6 +8,9 @@ import * as React from "react";
 import { KeyboardMode, createKeyborg } from "./common/KeyboardMode";
 import { ShadowRoot } from "./common/ShadowRoot";
 
+const meta = { title: "Shadow Dom" };
+export default meta;
+
 export const Default = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
     <div
