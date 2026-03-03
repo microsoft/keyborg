@@ -56,8 +56,7 @@ export interface KeyborgFocusInEventDetails {
   originalEvent?: FocusEvent;
 }
 
-export interface KeyborgFocusInEvent
-  extends CustomEvent<KeyborgFocusInEventDetails> {
+export interface KeyborgFocusInEvent extends CustomEvent<KeyborgFocusInEventDetails> {
   /**
    * @deprecated - used `event.detail`
    */
