@@ -8,8 +8,8 @@ import {
   KeyborgFocusInEvent,
   KEYBORG_FOCUSIN,
   setupFocusEvent,
-} from "./FocusEvent";
-import { Disposable } from "./WeakRefInstance";
+} from "./FocusEvent.mts";
+import { Disposable } from "./WeakRefInstance.mts";
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {

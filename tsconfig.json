@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "declaration": true,
+    "noEmit": true,
     "noResolve": false,
     "jsx": "preserve",
-    "module": "ES2015",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "target": "ES2019",
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -14,9 +15,8 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist/",
     "lib": ["DOM", "ESNext"]
   },
-  "include": ["./src/**/*", "./tests/**/*", "./playwright.config.ts"],
+  "include": ["./src/**/*", "./tests/**/*", "./playwright.config.mts"],
   "exclude": ["dist", "node_modules"]
 }

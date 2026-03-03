@@ -5,8 +5,8 @@
 
 import * as React from "react";
 
-import { KeyboardMode, createKeyborg } from "./common/KeyboardMode";
-import { ShadowRoot } from "./common/ShadowRoot";
+import { KeyboardMode, createKeyborg } from "./common/KeyboardMode.tsx";
+import { ShadowRoot } from "./common/ShadowRoot.tsx";
 
 const meta = { title: "Shadow Dom" };
 export default meta;

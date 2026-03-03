@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createKeyborg } from "../src";
+import { createKeyborg } from "../src/index.mts";
 
 test("navigation between in shadow DOM", async ({ page }) => {
   await page.goto("/iframe.html?id=shadow-dom--default");
