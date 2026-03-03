@@ -17,7 +17,7 @@ const config = {
   bundler: webpackBundler((config) => {
     config.resolve = {
       alias: {
-        keyborg: path.resolve(dirname, "dist", "esm", "index.js"),
+        keyborg: path.resolve(dirname, "dist", "index.js"),
       },
     };
     return config;

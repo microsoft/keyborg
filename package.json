@@ -4,9 +4,10 @@
   "description": "Keyboard Navigation Detection for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
+  "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -23,7 +24,7 @@
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
-    "build": "tsup && npx downlevel-dts ./dist ./dist/ts3.9",
+    "build": "tsdown && npx downlevel-dts ./dist ./dist/ts3.9",
     "bundle-size": "npm run build && monosize measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
@@ -56,7 +57,7 @@
     "react-shadow": "^20.4.0",
     "release-it": "^19.0.2",
     "storybook": "^10.2.14",
-    "tsup": "^8.4.0",
+    "tsdown": "^0.20.3",
     "typescript": "^5.3.3"
   }
 }
