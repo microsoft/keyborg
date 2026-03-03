@@ -9,6 +9,9 @@ import { createKeyborg, disposeKeyborg, KEYBORG_FOCUSIN } from "../src";
 import type { KeyborgFocusInEvent } from "../src";
 import { ShadowRoot } from "./common/ShadowRoot";
 
+const meta = { title: "Focus In Event" };
+export default meta;
+
 function FocusInListener(props: {
   children: React.ReactNode;
   style?: React.CSSProperties;

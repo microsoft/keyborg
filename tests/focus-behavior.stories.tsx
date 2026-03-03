@@ -6,6 +6,9 @@
 import * as React from "react";
 import { KeyboardMode } from "./common/KeyboardMode";
 
+const meta = { title: "Focus Behavior" };
+export default meta;
+
 export const Buttons = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
     <h1>Focus Behavior with Buttons</h1>

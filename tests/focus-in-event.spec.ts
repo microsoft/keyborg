@@ -6,7 +6,7 @@
 import { test, expect } from "@playwright/test";
 
 test("behavior in light DOM", async ({ page }) => {
-  await page.goto("/?mode=preview&story=focus-in-event--default");
+  await page.goto("/iframe.html?id=focus-in-event--default");
 
   // Click the button [nav by mouse]
   await page.getByText("Button A").click();
@@ -34,7 +34,7 @@ test("behavior in light DOM", async ({ page }) => {
 });
 
 test("behavior in shadow roots", async ({ page }) => {
-  await page.goto("/?story=focus-in-event--nested-shadow-roots");
+  await page.goto("/iframe.html?id=focus-in-event--nested-shadow-roots");
 
   // Click the button [nav by mouse in shadow DOM]
   await page.getByText("Shadow DOM: Button A").click();
