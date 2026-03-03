@@ -1,20 +1,17 @@
-// @ts-check
-
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 import pkg from "./package.json";
 
 export default defineConfig({
   entry: ["src/index.ts"],
-  format: ["cjs", "esm"],
+  format: ["cjs", "es"],
   target: "es2019",
-  legacyOutput: true,
 
   env: {
     PKG_VERSION: pkg.version,
   },
 
-  clean: true,
+  fixedExtension: false,
+
   dts: true,
-  splitting: false,
   sourcemap: true,
 });
