@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { createKeyborg } from "../../src";
+import { createKeyborg } from "../../src/index.mts";
 
 export function KeyboardMode() {
   const [isNavigatingWithKeyboard, setIsNavigatingWithKeyboard] =

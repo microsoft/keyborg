@@ -5,9 +5,13 @@
 
 import * as React from "react";
 
-import { createKeyborg, disposeKeyborg, KEYBORG_FOCUSIN } from "../src";
-import type { KeyborgFocusInEvent } from "../src";
-import { ShadowRoot } from "./common/ShadowRoot";
+import {
+  createKeyborg,
+  disposeKeyborg,
+  KEYBORG_FOCUSIN,
+} from "../src/index.mts";
+import type { KeyborgFocusInEvent } from "../src/index.mts";
+import { ShadowRoot } from "./common/ShadowRoot.tsx";
 
 const meta = { title: "Focus In Event" };
 export default meta;

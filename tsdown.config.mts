@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 import pkg from "./package.json";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.mts"],
   format: ["cjs", "es"],
   target: "es2019",
 

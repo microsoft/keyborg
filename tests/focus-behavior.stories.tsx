@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { KeyboardMode } from "./common/KeyboardMode";
+import { KeyboardMode } from "./common/KeyboardMode.tsx";
 
 const meta = { title: "Focus Behavior" };
 export default meta;

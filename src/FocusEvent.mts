@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { WeakRefInstance } from "./WeakRefInstance";
+import { WeakRefInstance } from "./WeakRefInstance.mts";
 
 export const KEYBORG_FOCUSIN = "keyborg:focusin";
 export const KEYBORG_FOCUSOUT = "keyborg:focusout";
