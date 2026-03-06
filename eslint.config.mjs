@@ -1,11 +1,8 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
-import header from "eslint-plugin-header";
+import header from "@tony.ganchev/eslint-plugin-header";
 import importPlugin from "eslint-plugin-import";
-
-// https://github.com/Stuk/eslint-plugin-header/issues/57#issuecomment-2378485611
-header.rules.header.meta.schema = false;
 
 export default tseslint.config(
   {
@@ -37,14 +34,20 @@ export default tseslint.config(
       "guard-for-in": "error",
       "header/header": [
         1,
-        "block",
-        [
-          "!",
-          " * Copyright (c) Microsoft Corporation. All rights reserved.",
-          " * Licensed under the MIT License.",
-          " ",
-        ],
-        1,
+        {
+          header: {
+            commentType: "block",
+            lines: [
+              "!",
+              " * Copyright (c) Microsoft Corporation. All rights reserved.",
+              " * Licensed under the MIT License.",
+              " ",
+            ],
+          },
+          trailingEmptyLines: {
+            minimum: 1
+          }
+        }
       ],
       "id-denylist": "off",
       "id-match": "off",
