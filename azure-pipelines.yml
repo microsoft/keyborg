@@ -48,9 +48,9 @@ extends:
                     git pull
             
               - task: NodeTool@0
-                displayName: Use Node 16.x
+                displayName: Use Node 22.x
                 inputs:
-                  versionSpec: 16.x
+                  versionSpec: 22.x
             
               - task: Npm@1
                 displayName: npm install
