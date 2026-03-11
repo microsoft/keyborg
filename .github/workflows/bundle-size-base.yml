@@ -28,7 +28,7 @@ jobs:
         run: npm run bundle-size
 
       - name: Prepare report
-        run: npx monosize upload-report --branch=main --commit-sha ${{ github.sha }}
+        run: npx monosize upload-report --branch=main --commit-sha ${{ github.sha }} --report-files-glob="dist/bundle-size/monosize.json"
 
       - name: Upload report artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
