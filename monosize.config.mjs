@@ -13,6 +13,7 @@ const config = {
     owner: "microsoft",
     repo: "keyborg",
     workflowFileName: "bundle-size-base.yml",
+    outputPath: path.resolve(dirname, "monosize-report.json"),
   }),
   bundler: webpackBundler((config) => {
     config.resolve = {
