@@ -29,6 +29,8 @@ jobs:
 
       - name: Compare bundle size with base
         run: npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Save PR number
