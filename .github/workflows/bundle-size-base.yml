@@ -27,10 +27,13 @@ jobs:
       - name: Build packages & create reports
         run: npm run bundle-size
 
-      - name: Upload report
+      - name: Prepare report
+        run: npx monosize upload-report --branch=main --commit-sha ${{ github.sha }}
+
+      - name: Upload report artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: monosize-report
           retention-days: 30
           if-no-files-found: error
-          path: dist/bundle-size/monosize.json
+          path: monosize-report.json
