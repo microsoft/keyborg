@@ -1,6 +1,6 @@
 // @ts-check
 
-import createAzureStorage from "monosize-storage-azure";
+import gitStorage from "monosize-storage-git";
 import path from "path";
 import webpackBundler from "monosize-bundler-webpack";
 
@@ -9,10 +9,11 @@ const dirname = new URL(".", import.meta.url).pathname;
 /** @type {import('monosize').MonoSizeConfig} */
 const config = {
   repository: "https://github.com/microsoft/keyborg",
-  storage: createAzureStorage({
-    authType: "AzurePipelinesCredential",
-    endpoint: "https://fluent-bundlesize.azurewebsites.net/api/keyborglatest",
-    tableName: "keyborglatest",
+  storage: gitStorage({
+    owner: "microsoft",
+    repo: "keyborg",
+    workflowFileName: "bundle-size-base.yml",
+    outputPath: path.resolve(dirname, "monosize-report.json"),
   }),
   bundler: webpackBundler((config) => {
     config.resolve = {
