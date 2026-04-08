@@ -46,12 +46,12 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@storybook/react-vite": "^10.2.14",
+    "@tony.ganchev/eslint-plugin-header": "^3.2.4",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "downlevel-dts": "^0.11.0",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-import": "^2.32.0",
     "monosize": "^0.8.0",
     "monosize-bundler-webpack": "^0.3.1",
