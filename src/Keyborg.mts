@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { off, on } from "./dom.mts";
 import {
   disposeFocusEvent,
   KeyborgFocusInEvent,
@@ -217,12 +218,12 @@ function createKeyborgCore(
   };
 
   const targetDocument = targetWindow.document;
-  targetDocument.addEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
-  targetDocument.addEventListener("mousedown", onMouseDown, true);
-  targetWindow.addEventListener("keydown", onKeyDown, true);
-  targetDocument.addEventListener("touchstart", onMouseOrTouch, true);
-  targetDocument.addEventListener("touchend", onMouseOrTouch, true);
-  targetDocument.addEventListener("touchcancel", onMouseOrTouch, true);
+  on(targetDocument, KEYBORG_FOCUSIN, onFocusIn as EventListener);
+  on(targetDocument, "mousedown", onMouseDown as EventListener);
+  on(targetWindow, "keydown", onKeyDown as EventListener);
+  on(targetDocument, "touchstart", onMouseOrTouch);
+  on(targetDocument, "touchend", onMouseOrTouch);
+  on(targetDocument, "touchcancel", onMouseOrTouch);
 
   setupFocusEvent(targetWindow);
 
@@ -240,12 +241,12 @@ function createKeyborgCore(
     }
     disposeFocusEvent(currentTargetWindow);
     const targetDocument = currentTargetWindow.document;
-    targetDocument.removeEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
-    targetDocument.removeEventListener("mousedown", onMouseDown, true);
-    currentTargetWindow.removeEventListener("keydown", onKeyDown, true);
-    targetDocument.removeEventListener("touchstart", onMouseOrTouch, true);
-    targetDocument.removeEventListener("touchend", onMouseOrTouch, true);
-    targetDocument.removeEventListener("touchcancel", onMouseOrTouch, true);
+    off(targetDocument, KEYBORG_FOCUSIN, onFocusIn as EventListener);
+    off(targetDocument, "mousedown", onMouseDown as EventListener);
+    off(currentTargetWindow, "keydown", onKeyDown as EventListener);
+    off(targetDocument, "touchstart", onMouseOrTouch);
+    off(targetDocument, "touchend", onMouseOrTouch);
+    off(targetDocument, "touchcancel", onMouseOrTouch);
     currentTargetWindow = undefined;
   };
 
