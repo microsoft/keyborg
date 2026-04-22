@@ -9,7 +9,6 @@ import {
   KEYBORG_FOCUSIN,
   setupFocusEvent,
 } from "./FocusEvent.mts";
-import { Disposable } from "./WeakRefInstance.mts";
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {
@@ -37,7 +36,7 @@ export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 /**
  * Manages a collection of Keyborg instances in a window/document and updates keyborg state
  */
-class KeyborgCore implements Disposable {
+class KeyborgCore {
   readonly id: string;
 
   private _win?: WindowWithKeyborg;
@@ -115,10 +114,6 @@ class KeyborgCore implements Disposable {
 
       delete this._win;
     }
-  }
-
-  isDisposed(): boolean {
-    return !!this._win;
   }
 
   /**
