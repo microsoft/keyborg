@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { WeakRefInstance } from "./WeakRefInstance.mts";
-
 export const KEYBORG_FOCUSIN = "keyborg:focusin";
 export const KEYBORG_FOCUSOUT = "keyborg:focusout";
 
@@ -17,8 +15,8 @@ interface KeyborgFocus {
 interface KeyborgFocusEventData {
   focusInHandler: (e: FocusEvent) => void;
   focusOutHandler: (e: FocusEvent) => void;
-  lastFocusedProgrammatically?: WeakRefInstance<HTMLElement>;
-  shadowTargets: Set<WeakRefInstance<ShadowRoot>>;
+  lastFocusedProgrammatically?: WeakRef<HTMLElement>;
+  shadowTargets: Set<WeakRef<ShadowRoot>>;
 }
 
 /**
@@ -101,7 +99,7 @@ export function setupFocusEvent(win: Window): void {
 
   kwin.HTMLElement.prototype.focus = focus;
 
-  const shadowTargets: Set<WeakRefInstance<ShadowRoot>> = new Set();
+  const shadowTargets: Set<WeakRef<ShadowRoot>> = new Set();
 
   const focusOutHandler = (e: FocusEvent) => {
     const target = e.target as HTMLElement;
@@ -227,7 +225,7 @@ export function setupFocusEvent(win: Window): void {
       shadowRoot.addEventListener("focusin", focusInHandler, true);
       shadowRoot.addEventListener("focusout", focusOutHandler, true);
 
-      shadowTargets.add(new WeakRefInstance(shadowRoot));
+      shadowTargets.add(new WeakRef(shadowRoot));
 
       return;
     }
@@ -281,9 +279,7 @@ export function setupFocusEvent(win: Window): void {
       .__keyborgData;
 
     if (keyborgNativeFocusEvent) {
-      keyborgNativeFocusEvent.lastFocusedProgrammatically = new WeakRefInstance(
-        this,
-      );
+      keyborgNativeFocusEvent.lastFocusedProgrammatically = new WeakRef(this);
     }
 
     // eslint-disable-next-line prefer-rest-params
