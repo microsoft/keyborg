@@ -12,358 +12,313 @@ import {
 
 interface WindowWithKeyborg extends Window {
   __keyborg?: {
-    core: KeyborgCore;
+    core: KeyborgCoreHandle;
     refs: { [id: string]: Keyborg };
   };
 }
 
-const _dismissTimeout = 500; // When a key from dismissKeys is pressed and the focus is not moved
-// during _dismissTimeout time, dismiss the keyboard navigation mode.
+// When a key from dismissKeys is pressed and the focus is not moved during
+// _dismissTimeout ms, keyboard navigation mode is dismissed.
+const _dismissTimeout = 500;
 
 let _lastId = 0;
 
 export interface KeyborgProps {
-  // Keys to be used to trigger keyboard navigation mode. By default, any key will trigger
-  // it. Could be limited to, for example, just Tab (or Tab and arrow keys).
+  // Keys to be used to trigger keyboard navigation mode. By default, any key
+  // will trigger it. Could be limited to, for example, just Tab (or Tab and
+  // arrow keys).
   triggerKeys?: number[];
-  // Keys to be used to dismiss keyboard navigation mode using keyboard (in addition to
-  // mouse clicks which dismiss it). For example, Esc could be used to dismiss.
+  // Keys to be used to dismiss keyboard navigation mode using keyboard (in
+  // addition to mouse clicks which dismiss it). For example, Esc could be used
+  // to dismiss.
   dismissKeys?: number[];
 }
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
 /**
- * Manages a collection of Keyborg instances in a window/document and updates keyborg state
+ * Internal handle for the per-window core state. Not part of the public API.
  */
-class KeyborgCore {
-  readonly id: string;
+interface KeyborgCoreHandle {
+  dispose(): void;
+  getNavigating(): boolean;
+  setNavigating(val: boolean): void;
+}
 
-  private _win?: WindowWithKeyborg;
-  private _isMouseOrTouchUsedTimer: number | undefined;
-  private _dismissTimer: number | undefined;
-  private _triggerKeys?: Set<number>;
-  private _dismissKeys?: Set<number>;
-  private _isNavigatingWithKeyboard_DO_NOT_USE = false;
-
-  constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this.id = "c" + ++_lastId;
-    this._win = win;
-    const doc = win.document;
-
-    if (props) {
-      const triggerKeys = props.triggerKeys;
-      const dismissKeys = props.dismissKeys;
-
-      if (triggerKeys?.length) {
-        this._triggerKeys = new Set(triggerKeys);
-      }
-
-      if (dismissKeys?.length) {
-        this._dismissKeys = new Set(dismissKeys);
-      }
-    }
-
-    doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true); // Capture!
-    doc.addEventListener("mousedown", this._onMouseDown, true); // Capture!
-    win.addEventListener("keydown", this._onKeyDown, true); // Capture!
-
-    doc.addEventListener("touchstart", this._onMouseOrTouch, true); // Capture!
-    doc.addEventListener("touchend", this._onMouseOrTouch, true); // Capture!
-    doc.addEventListener("touchcancel", this._onMouseOrTouch, true); // Capture!
-
-    setupFocusEvent(win);
-  }
-
-  get isNavigatingWithKeyboard() {
-    return this._isNavigatingWithKeyboard_DO_NOT_USE;
-  }
-
-  set isNavigatingWithKeyboard(val: boolean) {
-    if (this._isNavigatingWithKeyboard_DO_NOT_USE !== val) {
-      this._isNavigatingWithKeyboard_DO_NOT_USE = val;
-      this.update();
-    }
-  }
-
-  dispose(): void {
-    const win = this._win;
-
-    if (win) {
-      if (this._isMouseOrTouchUsedTimer) {
-        win.clearTimeout(this._isMouseOrTouchUsedTimer);
-        this._isMouseOrTouchUsedTimer = undefined;
-      }
-
-      if (this._dismissTimer) {
-        win.clearTimeout(this._dismissTimer);
-        this._dismissTimer = undefined;
-      }
-
-      disposeFocusEvent(win);
-
-      const doc = win.document;
-
-      doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true); // Capture!
-      doc.removeEventListener("mousedown", this._onMouseDown, true); // Capture!
-      win.removeEventListener("keydown", this._onKeyDown, true); // Capture!
-
-      doc.removeEventListener("touchstart", this._onMouseOrTouch, true); // Capture!
-      doc.removeEventListener("touchend", this._onMouseOrTouch, true); // Capture!
-      doc.removeEventListener("touchcancel", this._onMouseOrTouch, true); // Capture!
-
-      delete this._win;
-    }
-  }
-
+/**
+ * Used to determine the keyboard navigation state.
+ */
+export interface Keyborg {
   /**
-   * Updates all keyborg instances with the keyboard navigation state
+   * @returns Whether the user is navigating with keyboard
    */
-  update(): void {
-    const keyborgs = this._win?.__keyborg?.refs;
+  isNavigatingWithKeyboard(): boolean;
+  /**
+   * @param callback - Called when the keyboard navigation state changes
+   */
+  subscribe(callback: KeyborgCallback): void;
+  /**
+   * @param callback - Registered with subscribe
+   */
+  unsubscribe(callback: KeyborgCallback): void;
+  /**
+   * Manually set the keyboard navigation state
+   */
+  setVal(isNavigatingWithKeyboard: boolean): void;
+}
 
-    if (keyborgs) {
-      for (const id of Object.keys(keyborgs)) {
-        Keyborg.update(keyborgs[id], this.isNavigatingWithKeyboard);
-      }
+// Augments the public Keyborg with internal methods invoked by the core's
+// broadcast loop and by disposeKeyborg. Not exported.
+interface KeyborgInternal extends Keyborg {
+  _notify(isNavigatingWithKeyboard: boolean): void;
+  _dispose(): void;
+}
+
+function createKeyborgCore(
+  targetWindow: WindowWithKeyborg,
+  props?: KeyborgProps,
+): KeyborgCoreHandle {
+  let currentTargetWindow: WindowWithKeyborg | undefined = targetWindow;
+  let isNavigating = false;
+  let isMouseOrTouchUsedTimer: number | undefined;
+  let dismissTimer: number | undefined;
+  let triggerKeys: Set<number> | undefined;
+  let dismissKeys: Set<number> | undefined;
+
+  if (props) {
+    if (props.triggerKeys?.length) {
+      triggerKeys = new Set(props.triggerKeys);
+    }
+    if (props.dismissKeys?.length) {
+      dismissKeys = new Set(props.dismissKeys);
     }
   }
 
-  private _onFocusIn = (e: KeyborgFocusInEvent) => {
+  const broadcast = (): void => {
+    const refs = currentTargetWindow?.__keyborg?.refs;
+    if (refs) {
+      for (const id of Object.keys(refs)) {
+        (refs[id] as KeyborgInternal)._notify(isNavigating);
+      }
+    }
+  };
+
+  const setNavigating = (val: boolean): void => {
+    if (isNavigating !== val) {
+      isNavigating = val;
+      broadcast();
+    }
+  };
+
+  const shouldTrigger = (e: KeyboardEvent): boolean => {
+    // TODO Some rich text fields can allow Tab key for indentation so it
+    // doesn't need to be a navigation key. If there is a bug regarding that
+    // we should revisit.
+    if (e.key === "Tab") {
+      return true;
+    }
+    const active = currentTargetWindow?.document
+      .activeElement as HTMLElement | null;
+    const isTriggerKey = !triggerKeys || triggerKeys.has(e.keyCode);
+    const isEditable =
+      active &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.isContentEditable);
+    return isTriggerKey && !isEditable;
+  };
+
+  const shouldDismiss = (e: KeyboardEvent): boolean => {
+    return !!dismissKeys?.has(e.keyCode);
+  };
+
+  const scheduleDismiss = (): void => {
+    const targetWindow = currentTargetWindow;
+    if (!targetWindow) {
+      return;
+    }
+    if (dismissTimer) {
+      targetWindow.clearTimeout(dismissTimer);
+      dismissTimer = undefined;
+    }
+    const previousActiveElement = targetWindow.document.activeElement;
+    dismissTimer = targetWindow.setTimeout(() => {
+      dismissTimer = undefined;
+      const currentActiveElement = targetWindow.document.activeElement;
+      if (
+        previousActiveElement &&
+        currentActiveElement &&
+        previousActiveElement === currentActiveElement
+      ) {
+        // Esc was pressed, currently focused element hasn't changed.
+        // Just dismiss the keyboard navigation mode.
+        setNavigating(false);
+      }
+    }, _dismissTimeout);
+  };
+
+  const onFocusIn = (e: KeyborgFocusInEvent): void => {
     // When the focus is moved not programmatically and without keydown events,
-    // it is likely that the focus is moved by screen reader (as it might swallow
-    // the events when the screen reader shortcuts are used). The screen reader
-    // usage is keyboard navigation.
-
-    if (this._isMouseOrTouchUsedTimer) {
-      // There was a mouse or touch event recently.
+    // it is likely that the focus is moved by screen reader (as it might
+    // swallow the events when the screen reader shortcuts are used). The
+    // screen reader usage is keyboard navigation.
+    if (isMouseOrTouchUsedTimer) {
       return;
     }
-
-    if (this.isNavigatingWithKeyboard) {
+    if (isNavigating) {
       return;
     }
-
     const details = e.detail;
-
     if (!details.relatedTarget) {
       return;
     }
-
     if (
       details.isFocusedProgrammatically ||
       details.isFocusedProgrammatically === undefined
     ) {
-      // The element is focused programmatically, or the programmatic focus detection
-      // is not working.
       return;
     }
-
-    this.isNavigatingWithKeyboard = true;
+    setNavigating(true);
   };
 
-  private _onMouseDown = (e: MouseEvent): void => {
+  const onMouseOrTouch = (): void => {
+    if (currentTargetWindow) {
+      if (isMouseOrTouchUsedTimer) {
+        currentTargetWindow.clearTimeout(isMouseOrTouchUsedTimer);
+      }
+      isMouseOrTouchUsedTimer = currentTargetWindow.setTimeout(() => {
+        isMouseOrTouchUsedTimer = undefined;
+      }, 1000);
+    }
+    setNavigating(false);
+  };
+
+  const onMouseDown = (e: MouseEvent): void => {
     if (
       e.buttons === 0 ||
       (e.clientX === 0 && e.clientY === 0 && e.screenX === 0 && e.screenY === 0)
     ) {
-      // This is most likely an event triggered by the screen reader to perform
-      // an action on an element, do not dismiss the keyboard navigation mode.
+      // This is most likely an event triggered by the screen reader to
+      // perform an action on an element, do not dismiss the keyboard
+      // navigation mode.
       return;
     }
-
-    this._onMouseOrTouch();
+    onMouseOrTouch();
   };
 
-  private _onMouseOrTouch = (): void => {
-    const win = this._win;
-
-    if (win) {
-      if (this._isMouseOrTouchUsedTimer) {
-        win.clearTimeout(this._isMouseOrTouchUsedTimer);
+  const onKeyDown = (e: KeyboardEvent): void => {
+    if (isNavigating) {
+      if (shouldDismiss(e)) {
+        scheduleDismiss();
       }
-
-      this._isMouseOrTouchUsedTimer = win.setTimeout(() => {
-        delete this._isMouseOrTouchUsedTimer;
-      }, 1000); // Keeping the indication of mouse or touch usage for some time.
-    }
-
-    this.isNavigatingWithKeyboard = false;
-  };
-
-  private _onKeyDown = (e: KeyboardEvent): void => {
-    const isNavigatingWithKeyboard = this.isNavigatingWithKeyboard;
-
-    if (isNavigatingWithKeyboard) {
-      if (this._shouldDismissKeyboardNavigation(e)) {
-        this._scheduleDismiss();
-      }
-    } else {
-      if (this._shouldTriggerKeyboardNavigation(e)) {
-        this.isNavigatingWithKeyboard = true;
-      }
+    } else if (shouldTrigger(e)) {
+      setNavigating(true);
     }
   };
 
-  /**
-   * @returns whether the keyboard event should trigger keyboard navigation mode
-   */
-  private _shouldTriggerKeyboardNavigation(e: KeyboardEvent) {
-    // TODO Some rich text fields can allow Tab key for indentation so it doesn't
-    // need to be a navigation key. If there is a bug regarding that we should revisit
-    if (e.key === "Tab") {
-      return true;
+  const targetDocument = targetWindow.document;
+  targetDocument.addEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
+  targetDocument.addEventListener("mousedown", onMouseDown, true);
+  targetWindow.addEventListener("keydown", onKeyDown, true);
+  targetDocument.addEventListener("touchstart", onMouseOrTouch, true);
+  targetDocument.addEventListener("touchend", onMouseOrTouch, true);
+  targetDocument.addEventListener("touchcancel", onMouseOrTouch, true);
+
+  setupFocusEvent(targetWindow);
+
+  const dispose = (): void => {
+    if (!currentTargetWindow) {
+      return;
     }
-
-    const activeElement = this._win?.document
-      .activeElement as HTMLElement | null;
-    const isTriggerKey = !this._triggerKeys || this._triggerKeys.has(e.keyCode);
-
-    const isEditable =
-      activeElement &&
-      (activeElement.tagName === "INPUT" ||
-        activeElement.tagName === "TEXTAREA" ||
-        activeElement.isContentEditable);
-
-    return isTriggerKey && !isEditable;
-  }
-
-  /**
-   * @returns whether the keyboard event should dismiss keyboard navigation mode
-   */
-  private _shouldDismissKeyboardNavigation(e: KeyboardEvent) {
-    return this._dismissKeys?.has(e.keyCode);
-  }
-
-  private _scheduleDismiss(): void {
-    const win = this._win;
-
-    if (win) {
-      if (this._dismissTimer) {
-        win.clearTimeout(this._dismissTimer);
-        this._dismissTimer = undefined;
-      }
-
-      const was = win.document.activeElement;
-
-      this._dismissTimer = win.setTimeout(() => {
-        this._dismissTimer = undefined;
-
-        const cur = win.document.activeElement;
-
-        if (was && cur && was === cur) {
-          // Esc was pressed, currently focused element hasn't changed.
-          // Just dismiss the keyboard navigation mode.
-          this.isNavigatingWithKeyboard = false;
-        }
-      }, _dismissTimeout);
+    if (isMouseOrTouchUsedTimer) {
+      currentTargetWindow.clearTimeout(isMouseOrTouchUsedTimer);
+      isMouseOrTouchUsedTimer = undefined;
     }
-  }
-}
-
-/**
- * Used to determine the keyboard navigation state
- */
-export class Keyborg {
-  private _id: string;
-  private _win?: WindowWithKeyborg;
-  private _core?: KeyborgCore;
-  private _cb: KeyborgCallback[] = [];
-
-  static create(win: WindowWithKeyborg, props?: KeyborgProps): Keyborg {
-    return new Keyborg(win, props);
-  }
-
-  static dispose(instance: Keyborg): void {
-    instance.dispose();
-  }
-
-  /**
-   * Updates all subscribed callbacks with the keyboard navigation state
-   */
-  static update(instance: Keyborg, isNavigatingWithKeyboard: boolean): void {
-    instance._cb.forEach((callback) => callback(isNavigatingWithKeyboard));
-  }
-
-  private constructor(win: WindowWithKeyborg, props?: KeyborgProps) {
-    this._id = "k" + ++_lastId;
-    this._win = win;
-
-    const current = win.__keyborg;
-
-    if (current) {
-      this._core = current.core;
-      current.refs[this._id] = this;
-    } else {
-      this._core = new KeyborgCore(win, props);
-      win.__keyborg = {
-        core: this._core,
-        refs: { [this._id]: this },
-      };
+    if (dismissTimer) {
+      currentTargetWindow.clearTimeout(dismissTimer);
+      dismissTimer = undefined;
     }
-  }
+    disposeFocusEvent(currentTargetWindow);
+    const targetDocument = currentTargetWindow.document;
+    targetDocument.removeEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
+    targetDocument.removeEventListener("mousedown", onMouseDown, true);
+    currentTargetWindow.removeEventListener("keydown", onKeyDown, true);
+    targetDocument.removeEventListener("touchstart", onMouseOrTouch, true);
+    targetDocument.removeEventListener("touchend", onMouseOrTouch, true);
+    targetDocument.removeEventListener("touchcancel", onMouseOrTouch, true);
+    currentTargetWindow = undefined;
+  };
 
-  private dispose(): void {
-    const current = this._win?.__keyborg;
-
-    if (current?.refs[this._id]) {
-      delete current.refs[this._id];
-
-      if (Object.keys(current.refs).length === 0) {
-        current.core.dispose();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        delete this._win!.__keyborg;
-      }
-    } else if (process.env.NODE_ENV !== "production") {
-      console.error(
-        `Keyborg instance ${this._id} is being disposed incorrectly.`,
-      );
-    }
-
-    this._cb = [];
-    delete this._core;
-    delete this._win;
-  }
-
-  /**
-   * @returns Whether the user is navigating with keyboard
-   */
-  isNavigatingWithKeyboard(): boolean {
-    return !!this._core?.isNavigatingWithKeyboard;
-  }
-
-  /**
-   * @param callback - Called when the keyboard navigation state changes
-   */
-  subscribe(callback: KeyborgCallback): void {
-    this._cb.push(callback);
-  }
-
-  /**
-   * @param callback - Registered with subscribe
-   */
-  unsubscribe(callback: KeyborgCallback): void {
-    const index = this._cb.indexOf(callback);
-
-    if (index >= 0) {
-      this._cb.splice(index, 1);
-    }
-  }
-
-  /**
-   * Manually set the keyboard navigtion state
-   */
-  setVal(isNavigatingWithKeyboard: boolean): void {
-    if (this._core) {
-      this._core.isNavigatingWithKeyboard = isNavigatingWithKeyboard;
-    }
-  }
+  return {
+    dispose,
+    getNavigating: () => isNavigating,
+    setNavigating,
+  };
 }
 
 export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
-  return Keyborg.create(win, props);
+  const kwin = win as WindowWithKeyborg;
+  const id = "k" + ++_lastId;
+  let localWin: WindowWithKeyborg | undefined = kwin;
+  let core: KeyborgCoreHandle | undefined;
+  let callbacks: KeyborgCallback[] = [];
+
+  const existing = kwin.__keyborg;
+  if (existing) {
+    core = existing.core;
+  } else {
+    core = createKeyborgCore(kwin, props);
+  }
+
+  const instance: KeyborgInternal = {
+    isNavigatingWithKeyboard() {
+      return !!core?.getNavigating();
+    },
+    subscribe(callback) {
+      callbacks.push(callback);
+    },
+    unsubscribe(callback) {
+      const index = callbacks.indexOf(callback);
+      if (index >= 0) {
+        callbacks.splice(index, 1);
+      }
+    },
+    setVal(val) {
+      core?.setNavigating(val);
+    },
+    _notify(val) {
+      callbacks.forEach((cb) => cb(val));
+    },
+    _dispose() {
+      const wkb = localWin?.__keyborg;
+      if (wkb?.refs[id]) {
+        delete wkb.refs[id];
+        if (Object.keys(wkb.refs).length === 0) {
+          wkb.core.dispose();
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          delete localWin!.__keyborg;
+        }
+      } else if (process.env.NODE_ENV !== "production") {
+        console.error(`Keyborg instance ${id} is being disposed incorrectly.`);
+      }
+      callbacks = [];
+      core = undefined;
+      localWin = undefined;
+    },
+  };
+
+  if (existing) {
+    existing.refs[id] = instance;
+  } else {
+    kwin.__keyborg = {
+      core,
+      refs: { [id]: instance },
+    };
+  }
+
+  return instance;
 }
 
-export function disposeKeyborg(instance: Keyborg) {
-  Keyborg.dispose(instance);
+export function disposeKeyborg(instance: Keyborg): void {
+  (instance as KeyborgInternal)._dispose();
 }
