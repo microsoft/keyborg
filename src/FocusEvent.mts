@@ -9,9 +9,10 @@ export const KEYBORG_FOCUSIN = "keyborg:focusin";
 export const KEYBORG_FOCUSOUT = "keyborg:focusout";
 
 interface KeyborgFocus {
-  // Retained so the native `focus` can be restored when keyborg is disposed.
-  // Short key — internal, never read by any external consumer.
-  _n?: (options?: FocusOptions | undefined) => void;
+  /**
+   * This is the native `focus` function that is retained so that it can be restored when keyborg is disposed
+   */
+  __keyborgNativeFocus?: (options?: FocusOptions | undefined) => void;
 }
 
 // Internal data stored on `window.__keyborgData` as a tuple. Nothing outside
@@ -82,8 +83,8 @@ export type KeyborgFocusOutEvent = CustomEvent<KeyborgFocusOutEventDetails>;
 export function nativeFocus(element: HTMLElement): void {
   const focus = element.focus as KeyborgFocus;
 
-  if (focus._n) {
-    focus._n.call(element);
+  if (focus.__keyborgNativeFocus) {
+    focus.__keyborgNativeFocus.call(element);
   } else {
     element.focus();
   }
@@ -103,7 +104,7 @@ export function setupFocusEvent(win: Window): void {
 
   const origFocus = proto.focus;
 
-  if ((origFocus as KeyborgFocus)._n) {
+  if ((origFocus as KeyborgFocus).__keyborgNativeFocus) {
     // Already set up.
     return;
   }
@@ -190,6 +191,41 @@ export function setupFocusEvent(win: Window): void {
        * Each shadow root encounter requires a new capture listener.
        * Why capture? - we want to follow the focus event in order or descending nested shadow roots
        * When there are no more shadow root targets - dispatch the keyborg:focusin event
+       *
+       * 1. no focus event
+       * > document - capture listener ✅
+       *   > shadow root 1
+       *     > shadow root 2
+       *       > shadow root 3
+       *         > focused element
+       *
+       * 2. focus event received by document listener
+       * > document - capture listener ✅ (focus event here)
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2
+       *       > shadow root 3
+       *         > focused element
+       *
+       * 3. focus event received by root l1 listener
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅ (focus event here)
+       *     > shadow root 2 - capture listener ✅
+       *       > shadow root 3
+       *         > focused element
+       *
+       * 4. focus event received by root l2 listener
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2 - capture listener ✅ (focus event here)
+       *       > shadow root 3 - capture listener ✅
+       *         > focused element
+       *
+       * 5. focus event received by root l3 listener, no more shadow root targets
+       * > document - capture listener ✅
+       *   > shadow root 1 - capture listener ✅
+       *     > shadow root 2 - capture listener ✅
+       *       > shadow root 3 - capture listener ✅ (focus event here)
+       *         > focused element ✅ (no shadow root - dispatch keyborg event)
        */
 
       for (const shadowRootWeakRef of shadowTargets) {
@@ -263,7 +299,7 @@ export function setupFocusEvent(win: Window): void {
     activeElement = activeElement.shadowRoot.activeElement;
   }
 
-  (focus as KeyborgFocus)._n = origFocus;
+  (focus as KeyborgFocus).__keyborgNativeFocus = origFocus;
 }
 
 /**
@@ -273,7 +309,7 @@ export function setupFocusEvent(win: Window): void {
 export function disposeFocusEvent(win: Window): void {
   const kwin = win as WindowWithKeyborgFocusEvent;
   const proto = kwin.HTMLElement.prototype;
-  const origFocus = (proto.focus as KeyborgFocus)._n;
+  const origFocus = (proto.focus as KeyborgFocus).__keyborgNativeFocus;
   const data = kwin.__keyborgData;
 
   if (data) {
