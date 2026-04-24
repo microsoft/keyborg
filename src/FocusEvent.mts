@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { off, on } from "./dom.mts";
+
+import { addEventListener, removeEventListener } from "./dom.mts";
 
 export const KEYBORG_FOCUSIN = "keyborg:focusin";
 export const KEYBORG_FOCUSOUT = "keyborg:focusout";
@@ -13,14 +14,19 @@ interface KeyborgFocus {
   _n?: (options?: FocusOptions | undefined) => void;
 }
 
-// Internal data bag stored on `window.__keyborgData`. Keys are abbreviated:
-// nothing outside this module reads them, so shortening them is free bytes.
-interface KeyborgFocusEventData {
-  _fi: EventListener;
-  _fo: EventListener;
-  _lfp?: WeakRef<HTMLElement>;
-  _st: Set<WeakRef<ShadowRoot>>;
-}
+// Internal data stored on `window.__keyborgData` as a tuple. Nothing outside
+// this module reads these slots, so a tuple drops the property-name strings
+// from the minified output — the indexes below inline as numeric literals.
+const FOCUS_IN_HANDLER = 0;
+const FOCUS_OUT_HANDLER = 1;
+const SHADOW_TARGETS = 2;
+const LAST_FOCUSED_PROGRAMMATICALLY = 3;
+type KeyborgFocusEventData = [
+  (e: FocusEvent) => void,
+  (e: FocusEvent) => void,
+  Set<WeakRef<ShadowRoot>>,
+  WeakRef<HTMLElement>?,
+];
 
 /**
  * Extends the global window with keyborg focus event data
@@ -57,8 +63,7 @@ export interface KeyborgFocusInEventDetails {
   originalEvent?: FocusEvent;
 }
 
-export interface KeyborgFocusInEvent
-  extends CustomEvent<KeyborgFocusInEventDetails> {
+export interface KeyborgFocusInEvent extends CustomEvent<KeyborgFocusInEventDetails> {
   /**
    * @deprecated - used `event.detail`
    */
@@ -107,8 +112,8 @@ export function setupFocusEvent(win: Window): void {
 
   const shadowTargets: Set<WeakRef<ShadowRoot>> = new Set();
 
-  const focusOutHandler: EventListener = (e) => {
-    const target = (e as FocusEvent).target as HTMLElement;
+  const focusOutHandler = (e: FocusEvent) => {
+    const target = e.target as HTMLElement;
 
     if (!target) {
       return;
@@ -120,22 +125,21 @@ export function setupFocusEvent(win: Window): void {
       // Allows the event to bubble past an open shadow root
       composed: true,
       detail: {
-        originalEvent: e as FocusEvent,
+        originalEvent: e,
       },
     });
 
     target.dispatchEvent(event);
   };
 
-  const focusInHandler: EventListener = (e) => {
-    const focusEvent = e as FocusEvent;
-    const target = focusEvent.target as HTMLElement;
+  const focusInHandler = (e: FocusEvent) => {
+    const target = e.target as HTMLElement;
 
     if (!target) {
       return;
     }
 
-    let node: Node | null | undefined = focusEvent.composedPath()[0] as
+    let node: Node | null | undefined = e.composedPath()[0] as
       | Node
       | null
       | undefined;
@@ -158,16 +162,13 @@ export function setupFocusEvent(win: Window): void {
         shadowTargets.delete(shadowRootWeakRef);
 
         if (shadowRoot) {
-          off(shadowRoot, "focusin", focusInHandler);
-          off(shadowRoot, "focusout", focusOutHandler);
+          removeEventListener(shadowRoot, "focusin", focusInHandler);
+          removeEventListener(shadowRoot, "focusout", focusOutHandler);
         }
       }
     }
 
-    onFocusIn(
-      target,
-      (focusEvent.relatedTarget as HTMLElement | null) || undefined,
-    );
+    onFocusIn(target, (e.relatedTarget as HTMLElement | null) || undefined);
   };
 
   const onFocusIn = (
@@ -197,8 +198,8 @@ export function setupFocusEvent(win: Window): void {
         }
       }
 
-      on(shadowRoot, "focusin", focusInHandler);
-      on(shadowRoot, "focusout", focusOutHandler);
+      addEventListener(shadowRoot, "focusin", focusInHandler);
+      addEventListener(shadowRoot, "focusout", focusOutHandler);
 
       shadowTargets.add(new WeakRef(shadowRoot));
 
@@ -221,29 +222,31 @@ export function setupFocusEvent(win: Window): void {
     // Tabster (and other users) can still use the legacy details field - keeping for backwards compat
     event.details = details;
 
-    if (_canOverrideNativeFocus || data._lfp) {
-      details.isFocusedProgrammatically = target === data._lfp?.deref();
+    if (_canOverrideNativeFocus || data[LAST_FOCUSED_PROGRAMMATICALLY]) {
+      details.isFocusedProgrammatically =
+        target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
 
-      data._lfp = undefined;
+      data[LAST_FOCUSED_PROGRAMMATICALLY] = undefined;
     }
 
     target.dispatchEvent(event);
   };
 
-  const data: KeyborgFocusEventData = (kwin.__keyborgData = {
-    _fi: focusInHandler,
-    _fo: focusOutHandler,
-    _st: shadowTargets,
-  });
+  const data: KeyborgFocusEventData = [
+    focusInHandler,
+    focusOutHandler,
+    shadowTargets,
+  ];
+  kwin.__keyborgData = data;
 
-  on(doc, "focusin", focusInHandler);
-  on(doc, "focusout", focusOutHandler);
+  addEventListener(doc, "focusin", focusInHandler);
+  addEventListener(doc, "focusout", focusOutHandler);
 
   function focus(this: HTMLElement) {
     const d = (kwin as WindowWithKeyborgFocusEvent).__keyborgData;
 
     if (d) {
-      d._lfp = new WeakRef(this);
+      d[LAST_FOCUSED_PROGRAMMATICALLY] = new WeakRef(this);
     }
 
     // eslint-disable-next-line prefer-rest-params
@@ -274,19 +277,20 @@ export function disposeFocusEvent(win: Window): void {
   const data = kwin.__keyborgData;
 
   if (data) {
-    off(kwin.document, "focusin", data._fi);
-    off(kwin.document, "focusout", data._fo);
+    const doc = kwin.document;
+    removeEventListener(doc, "focusin", data[FOCUS_IN_HANDLER]);
+    removeEventListener(doc, "focusout", data[FOCUS_OUT_HANDLER]);
 
-    for (const shadowRootWeakRef of data._st) {
+    for (const shadowRootWeakRef of data[SHADOW_TARGETS]) {
       const shadowRoot = shadowRootWeakRef.deref();
 
       if (shadowRoot) {
-        off(shadowRoot, "focusin", data._fi);
-        off(shadowRoot, "focusout", data._fo);
+        removeEventListener(shadowRoot, "focusin", data[FOCUS_IN_HANDLER]);
+        removeEventListener(shadowRoot, "focusout", data[FOCUS_OUT_HANDLER]);
       }
     }
 
-    data._st.clear();
+    data[SHADOW_TARGETS].clear();
 
     delete kwin.__keyborgData;
   }
@@ -305,5 +309,7 @@ export function getLastFocusedProgrammatically(
 ): HTMLElement | null | undefined {
   const data = (win as WindowWithKeyborgFocusEvent).__keyborgData;
 
-  return data ? data._lfp?.deref() || null : undefined;
+  return data
+    ? data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref() || null
+    : undefined;
 }

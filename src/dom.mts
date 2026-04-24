@@ -4,8 +4,9 @@
  */
 
 // All keyborg listeners use the capture phase; centralizing the calls lets the
-// minifier collapse repeated DOM method names.
-export const on = (
+// minifier collapse the repeated DOM method names into a single short-named
+// import binding.
+export const addEventListener = (
   target: EventTarget,
   type: string,
   handler: EventListener,
@@ -13,7 +14,7 @@ export const on = (
   target.addEventListener(type, handler, true);
 };
 
-export const off = (
+export const removeEventListener = (
   target: EventTarget,
   type: string,
   handler: EventListener,
