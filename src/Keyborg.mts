@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { addEventListener, removeEventListener } from "./dom.mts";
 import {
   disposeFocusEvent,
   KeyborgFocusInEvent,
@@ -217,12 +218,12 @@ function createKeyborgCore(
   };
 
   const targetDocument = targetWindow.document;
-  targetDocument.addEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
-  targetDocument.addEventListener("mousedown", onMouseDown, true);
-  targetWindow.addEventListener("keydown", onKeyDown, true);
-  targetDocument.addEventListener("touchstart", onMouseOrTouch, true);
-  targetDocument.addEventListener("touchend", onMouseOrTouch, true);
-  targetDocument.addEventListener("touchcancel", onMouseOrTouch, true);
+  addEventListener(targetDocument, KEYBORG_FOCUSIN, onFocusIn as EventListener);
+  addEventListener(targetDocument, "mousedown", onMouseDown as EventListener);
+  addEventListener(targetWindow, "keydown", onKeyDown as EventListener);
+  addEventListener(targetDocument, "touchstart", onMouseOrTouch);
+  addEventListener(targetDocument, "touchend", onMouseOrTouch);
+  addEventListener(targetDocument, "touchcancel", onMouseOrTouch);
 
   setupFocusEvent(targetWindow);
 
@@ -240,12 +241,24 @@ function createKeyborgCore(
     }
     disposeFocusEvent(currentTargetWindow);
     const targetDocument = currentTargetWindow.document;
-    targetDocument.removeEventListener(KEYBORG_FOCUSIN, onFocusIn, true);
-    targetDocument.removeEventListener("mousedown", onMouseDown, true);
-    currentTargetWindow.removeEventListener("keydown", onKeyDown, true);
-    targetDocument.removeEventListener("touchstart", onMouseOrTouch, true);
-    targetDocument.removeEventListener("touchend", onMouseOrTouch, true);
-    targetDocument.removeEventListener("touchcancel", onMouseOrTouch, true);
+    removeEventListener(
+      targetDocument,
+      KEYBORG_FOCUSIN,
+      onFocusIn as EventListener,
+    );
+    removeEventListener(
+      targetDocument,
+      "mousedown",
+      onMouseDown as EventListener,
+    );
+    removeEventListener(
+      currentTargetWindow,
+      "keydown",
+      onKeyDown as EventListener,
+    );
+    removeEventListener(targetDocument, "touchstart", onMouseOrTouch);
+    removeEventListener(targetDocument, "touchend", onMouseOrTouch);
+    removeEventListener(targetDocument, "touchcancel", onMouseOrTouch);
     currentTargetWindow = undefined;
   };
 
