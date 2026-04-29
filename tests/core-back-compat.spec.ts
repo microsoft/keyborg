@@ -222,9 +222,7 @@ test("foreign core broadcasting via old protocol notifies new subscribers", asyn
           const refs = win.__keyborg?.refs;
           if (refs) {
             for (const id of Object.keys(refs)) {
-              (refs[id] as ForeignInstance)._cb.forEach((cb) =>
-                cb(foreignNav),
-              );
+              (refs[id] as ForeignInstance)._cb.forEach((cb) => cb(foreignNav));
             }
           }
         }
