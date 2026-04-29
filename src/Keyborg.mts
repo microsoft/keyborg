@@ -39,11 +39,16 @@ export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
 /**
  * Internal handle for the per-window core state. Not part of the public API.
+ *
+ * Shape is part of the `__keyborg.core` slot contract: when multiple keyborg
+ * majors share the same window, the second loader reads `core` set by the
+ * first. Keep `isNavigatingWithKeyboard` as a writable property accessor and
+ * `dispose()` as a method so older majors can still read/write state without
+ * TypeError. Changes here are breaking for that interop.
  */
 interface KeyborgCoreHandle {
+  isNavigatingWithKeyboard: boolean;
   dispose(): void;
-  getNavigating(): boolean;
-  setNavigating(val: boolean): void;
 }
 
 /**
@@ -264,8 +269,12 @@ function createKeyborgCore(
 
   return {
     dispose,
-    getNavigating: () => isNavigating,
-    setNavigating,
+    get isNavigatingWithKeyboard() {
+      return isNavigating;
+    },
+    set isNavigatingWithKeyboard(val: boolean) {
+      setNavigating(val);
+    },
   };
 }
 
@@ -285,7 +294,7 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
 
   const instance: KeyborgInternal = {
     isNavigatingWithKeyboard() {
-      return !!core?.getNavigating();
+      return !!core?.isNavigatingWithKeyboard;
     },
     subscribe(callback) {
       callbacks.push(callback);
@@ -297,7 +306,9 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
       }
     },
     setVal(val) {
-      core?.setNavigating(val);
+      if (core) {
+        core.isNavigatingWithKeyboard = val;
+      }
     },
     _notify(val) {
       callbacks.forEach((cb) => cb(val));
