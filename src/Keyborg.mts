@@ -73,11 +73,14 @@ export interface Keyborg {
   setVal(isNavigatingWithKeyboard: boolean): void;
 }
 
-// Augments the public Keyborg with internal methods invoked by the core's
-// broadcast loop and by disposeKeyborg. Not exported.
+// Augments the public Keyborg with internal members that also form the
+// `__keyborg.refs` slot wire protocol. The shape — `_cb` callback array and
+// `dispose()` method — matches keyborg <= 2.6.0's `Keyborg` class so that
+// mixed-version environments can broadcast and tear down each other's
+// instances without TypeError. Changes here are breaking for that interop.
 interface KeyborgInternal extends Keyborg {
-  _notify(isNavigatingWithKeyboard: boolean): void;
-  _dispose(): void;
+  _cb: KeyborgCallback[];
+  dispose(): void;
 }
 
 function createKeyborgCore(
@@ -104,7 +107,7 @@ function createKeyborgCore(
     const refs = currentTargetWindow?.__keyborg?.refs;
     if (refs) {
       for (const id of Object.keys(refs)) {
-        (refs[id] as KeyborgInternal)._notify(isNavigating);
+        (refs[id] as KeyborgInternal)._cb.forEach((cb) => cb(isNavigating));
       }
     }
   };
@@ -283,7 +286,10 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
   const id = "k" + ++_lastId;
   let localWin: WindowWithKeyborg | undefined = kwin;
   let core: KeyborgCoreHandle | undefined;
-  let callbacks: KeyborgCallback[] = [];
+  // `callbacks` is exposed as `instance._cb` to satisfy the slot wire
+  // protocol. We mutate the array in place (push/splice/length=0) so the
+  // reference stays stable for foreign-version broadcasts.
+  const callbacks: KeyborgCallback[] = [];
 
   const existing = kwin.__keyborg;
   if (existing) {
@@ -310,10 +316,8 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
         core.isNavigatingWithKeyboard = val;
       }
     },
-    _notify(val) {
-      callbacks.forEach((cb) => cb(val));
-    },
-    _dispose() {
+    _cb: callbacks,
+    dispose() {
       const wkb = localWin?.__keyborg;
       if (wkb?.refs[id]) {
         delete wkb.refs[id];
@@ -325,7 +329,7 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
       } else if (process.env.NODE_ENV !== "production") {
         console.error(`Keyborg instance ${id} is being disposed incorrectly.`);
       }
-      callbacks = [];
+      callbacks.length = 0;
       core = undefined;
       localWin = undefined;
     },
@@ -344,5 +348,5 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
 }
 
 export function disposeKeyborg(instance: Keyborg): void {
-  (instance as KeyborgInternal)._dispose();
+  (instance as KeyborgInternal).dispose();
 }
