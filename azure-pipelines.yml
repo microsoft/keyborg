@@ -48,9 +48,9 @@ extends:
                     git pull
             
               - task: NodeTool@0
-                displayName: Use Node 22.x
+                displayName: Use Node 24.x
                 inputs:
-                  versionSpec: 22.x
+                  versionSpec: 24.x
             
               - task: CmdLine@2
                 displayName: yarn install
