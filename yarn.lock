@@ -1357,6 +1357,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rolldown/pluginutils@npm:1.0.0-rc.7":
+  version: 1.0.0-rc.7
+  resolution: "@rolldown/pluginutils@npm:1.0.0-rc.7"
+  checksum: 10/92853a53b75d665da0b4cc3f855c87e606dda6b8d55e929fd08b4428b68ea833afbb140ba25c6c1f9856a739e419fd2929ef15ac0fd05b44e904705be34efe1f
+  languageName: node
+  linkType: hard
+
 "@rollup/pluginutils@npm:^5.0.2":
   version: 5.3.0
   resolution: "@rollup/pluginutils@npm:5.3.0"
@@ -1813,6 +1820,24 @@ __metadata:
     "@typescript-eslint/types": "npm:8.59.2"
     eslint-visitor-keys: "npm:^5.0.0"
   checksum: 10/ec8d797272c12b53b9eb2b508c326823b2cb17f6bcf57606238b812bb73854675919a5e772a42499ec1ac7787a16d018fffd94e6b168cc0b58a9872b16d6f1da
+  languageName: node
+  linkType: hard
+
+"@vitejs/plugin-react@npm:^6":
+  version: 6.0.1
+  resolution: "@vitejs/plugin-react@npm:6.0.1"
+  dependencies:
+    "@rolldown/pluginutils": "npm:1.0.0-rc.7"
+  peerDependencies:
+    "@rolldown/plugin-babel": ^0.1.7 || ^0.2.0
+    babel-plugin-react-compiler: ^1.0.0
+    vite: ^8.0.0
+  peerDependenciesMeta:
+    "@rolldown/plugin-babel":
+      optional: true
+    babel-plugin-react-compiler:
+      optional: true
+  checksum: 10/a525799252fa6c12bf9a0a367b17dfc3d5e8e02ec0b5b81554db9d97b764c554be6b0686e3dd385b0ac0350f0c023120ce712d79feedd99fa2cb854b7cd1e960
   languageName: node
   linkType: hard
 
@@ -4501,6 +4526,7 @@ __metadata:
     "@types/prop-types": "npm:^15"
     "@types/react": "npm:^18.3.28"
     "@types/react-dom": "npm:^18.3.7"
+    "@vitejs/plugin-react": "npm:^6"
     downlevel-dts: "npm:^0.11.0"
     eslint: "npm:^9.39.3"
     eslint-config-prettier: "npm:^10.1.8"
@@ -4520,7 +4546,7 @@ __metadata:
     tsdown: "npm:^0.21"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.56.1"
-    vite: "npm:^8"
+    vite: "npm:^8.0.10"
   languageName: unknown
   linkType: soft
 
@@ -6800,7 +6826,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^8":
+"vite@npm:^8.0.10":
   version: 8.0.10
   resolution: "vite@npm:8.0.10"
   dependencies:
