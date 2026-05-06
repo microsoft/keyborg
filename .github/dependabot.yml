@@ -1,0 +1,56 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 20
+    versioning-strategy: increase
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-patch'
+    groups:
+      eslint:
+        patterns:
+          - 'eslint'
+          - '@eslint/*'
+          - 'eslint-*'
+          - '@typescript-eslint/*'
+          - 'typescript-eslint'
+      playwright:
+        patterns:
+          - 'playwright'
+          - '@playwright/*'
+      storybook:
+        patterns:
+          - 'storybook'
+          - '@storybook/*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+      monosize:
+        patterns:
+          - 'monosize'
+          - 'monosize-*'
+      dev-minor:
+        dependency-type: development
+        update-types:
+          - minor
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-patch'
+    groups:
+      actions-minor:
+        update-types:
+          - minor
