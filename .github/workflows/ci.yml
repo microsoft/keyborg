@@ -28,13 +28,15 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: npm
+          cache: yarn
           node-version: 20
 
-      - run: npm ci
-      - run: npm run format
-      - run: npm run lint
-      - run: npm run build
+      - run: corepack enable
+      - run: yarn install --immutable
+      - run: yarn dedupe --check
+      - run: yarn format
+      - run: yarn lint
+      - run: yarn build
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
