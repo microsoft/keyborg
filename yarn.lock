@@ -1445,7 +1445,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/react-vite@npm:^10.2.14":
+"@storybook/react-vite@npm:^10.3.6":
   version: 10.3.6
   resolution: "@storybook/react-vite@npm:10.3.6"
   dependencies:
@@ -4497,7 +4497,7 @@ __metadata:
   resolution: "keyborg@workspace:."
   dependencies:
     "@playwright/test": "npm:^1.58.2"
-    "@storybook/react-vite": "npm:^10.2.14"
+    "@storybook/react-vite": "npm:^10.3.6"
     "@types/prop-types": "npm:^15"
     "@types/react": "npm:^18.3.28"
     "@types/react-dom": "npm:^18.3.7"
@@ -4516,7 +4516,7 @@ __metadata:
     react-dom: "npm:^18.3.1"
     react-shadow: "npm:^20.6.0"
     release-it: "npm:^20.0.0"
-    storybook: "npm:^10.2.14"
+    storybook: "npm:^10.3.6"
     tsdown: "npm:^0.21"
     typescript: "npm:^5.9.3"
     typescript-eslint: "npm:^8.56.1"
@@ -6189,7 +6189,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook@npm:^10.2.14":
+"storybook@npm:^10.3.6":
   version: 10.3.6
   resolution: "storybook@npm:10.3.6"
   dependencies:

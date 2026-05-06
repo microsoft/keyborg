@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@storybook/react-vite": "^10.2.14",
+    "@storybook/react-vite": "^10.3.6",
     "@types/prop-types": "^15",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
@@ -64,7 +64,7 @@
     "react-dom": "^18.3.1",
     "react-shadow": "^20.6.0",
     "release-it": "^20.0.0",
-    "storybook": "^10.2.14",
+    "storybook": "^10.3.6",
     "tsdown": "^0.21",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
