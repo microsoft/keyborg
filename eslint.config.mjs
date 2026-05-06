@@ -1,24 +1,21 @@
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
+// @ts-check
+
+import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier";
-import header from "eslint-plugin-header";
-import importPlugin from "eslint-plugin-import";
+import importX from "eslint-plugin-import-x";
+import tseslint from "typescript-eslint";
 
-// https://github.com/Stuk/eslint-plugin-header/issues/57#issuecomment-2378485611
-header.rules.header.meta.schema = false;
-
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: ["*.config.*", "dist/**"],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  js.configs.recommended,
+  tseslint.configs.recommended,
+  importX.flatConfigs.recommended,
+  importX.flatConfigs.typescript,
   eslintConfigPrettier,
   {
-    plugins: {
-      import: importPlugin,
-      header,
-    },
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -26,6 +23,7 @@ export default tseslint.config(
       },
     },
     rules: {
+      "import-x/order": "error",
       "@typescript-eslint/no-empty-function": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
       "@typescript-eslint/no-unused-expressions": [
@@ -35,20 +33,8 @@ export default tseslint.config(
       curly: "error",
       eqeqeq: ["error", "smart"],
       "guard-for-in": "error",
-      "header/header": [
-        1,
-        "block",
-        [
-          "!",
-          " * Copyright (c) Microsoft Corporation. All rights reserved.",
-          " * Licensed under the MIT License.",
-          " ",
-        ],
-        1,
-      ],
       "id-denylist": "off",
       "id-match": "off",
-      "import/order": "error",
       "no-bitwise": "off",
       "no-caller": "error",
       "no-console": [
