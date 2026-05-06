@@ -49,6 +49,7 @@
     "@types/prop-types": "^15",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6",
     "downlevel-dts": "^0.11.0",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
@@ -66,9 +67,9 @@
     "release-it": "^20.0.0",
     "storybook": "^10.2.14",
     "tsdown": "^0.21",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^6"
+    "vite": "^8.0.10"
   },
   "packageManager": "yarn@4.14.1"
 }
