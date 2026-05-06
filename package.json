@@ -17,13 +17,6 @@
     },
     "./package.json": "./package.json"
   },
-  "typesVersions": {
-    "<4.0": {
-      "dist/index.d.ts": [
-        "dist/ts3.9/index.d.ts"
-      ]
-    }
-  },
   "files": [
     "dist"
   ],
@@ -32,7 +25,7 @@
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
-    "build": "tsdown && downlevel-dts ./dist ./dist/ts3.9",
+    "build": "tsdown",
     "bundle-size": "yarn build && monosize measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
@@ -50,7 +43,6 @@
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6",
-    "downlevel-dts": "^0.11.0",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-header": "^3.1.1",
