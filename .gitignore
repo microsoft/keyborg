@@ -12,3 +12,12 @@ node_modules
 
 # Storybook
 storybook-static/
+
+# Yarn 4
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*

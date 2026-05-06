@@ -19,13 +19,14 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: npm
+          cache: yarn
           node-version: 20
 
-      - run: npm ci
+      - run: corepack enable
+      - run: yarn install --immutable
 
       - name: Build packages & create reports
-        run: npm run bundle-size
+        run: yarn bundle-size
 
       - name: Prepare report
         run: npx monosize upload-report --branch=main --commit-sha ${{ github.sha }} --report-files-glob="dist/bundle-size/monosize.json"

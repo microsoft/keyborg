@@ -52,10 +52,12 @@ extends:
                 inputs:
                   versionSpec: 22.x
             
-              - task: Npm@1
-                displayName: npm install
+              - task: CmdLine@2
+                displayName: yarn install
                 inputs:
-                  verbose: false
+                  script: |
+                    corepack enable
+                    yarn install --immutable
             
               - task: CmdLine@2
                 displayName: Authenticate git for pushes
@@ -76,7 +78,7 @@ extends:
                 displayName: Publish (official)
                 condition: eq(variables.prerelease, false)
                 inputs:
-                  script: 'npm run release -- $(publishVersion) --ci '
+                  script: 'yarn release $(publishVersion) --ci'
                 env:
                     NPM_TOKEN: $(npmToken)
             
@@ -84,6 +86,6 @@ extends:
                 displayName: Publish (prerelease)
                 condition: eq(variables.prerelease, true)
                 inputs:
-                  script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+                  script: yarn release $(publishVersion) --preRelease $(prereleaseTag) --ci
                 env:
                     NPM_TOKEN: $(npmToken)
