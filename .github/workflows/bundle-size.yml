@@ -29,6 +29,8 @@ jobs:
         run: yarn bundle-size
 
       - name: Compare bundle size with base
+        id: compare
+        continue-on-error: true
         run: npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,3 +47,7 @@ jobs:
           path: |
             monosize-report.md
             pr.txt
+
+      - name: Fail if threshold exceeded
+        if: steps.compare.outcome == 'failure'
+        run: exit 1
