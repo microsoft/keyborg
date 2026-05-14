@@ -38,8 +38,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.58.2",
-    "@storybook/react-vite": "^10.2.14",
+    "@playwright/test": "^1.60.0",
+    "@storybook/react-vite": "^10.4.0",
     "@types/prop-types": "^15",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
