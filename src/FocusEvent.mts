@@ -37,27 +37,6 @@ interface WindowWithKeyborgFocusEvent extends Window {
   __keyborgData?: KeyborgFocusEventData;
 }
 
-function canOverrideNativeFocus(win: Window): boolean {
-  const HTMLElement = (win as WindowWithKeyborgFocusEvent).HTMLElement;
-  const origFocus = HTMLElement.prototype.focus;
-
-  let isCustomFocusCalled = false;
-
-  HTMLElement.prototype.focus = function focus(): void {
-    isCustomFocusCalled = true;
-  };
-
-  const btn = win.document.createElement("button");
-
-  btn.focus();
-
-  HTMLElement.prototype.focus = origFocus;
-
-  return isCustomFocusCalled;
-}
-
-let _canOverrideNativeFocus = false;
-
 export interface KeyborgFocusInEventDetails {
   relatedTarget?: HTMLElement;
   isFocusedProgrammatically?: boolean;
@@ -92,11 +71,6 @@ export function setupFocusEvent(win: Window): void {
   const kwin = win as WindowWithKeyborgFocusEvent;
   const doc = kwin.document;
   const proto = kwin.HTMLElement.prototype;
-
-  if (!_canOverrideNativeFocus) {
-    _canOverrideNativeFocus = canOverrideNativeFocus(kwin);
-  }
-
   const origFocus = proto.focus;
 
   if ((origFocus as KeyborgFocus).__keyborgNativeFocus) {
@@ -250,12 +224,10 @@ export function setupFocusEvent(win: Window): void {
       detail: details,
     });
 
-    if (_canOverrideNativeFocus || data[LAST_FOCUSED_PROGRAMMATICALLY]) {
-      details.isFocusedProgrammatically =
-        target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
+    details.isFocusedProgrammatically =
+      target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
 
-      data[LAST_FOCUSED_PROGRAMMATICALLY] = undefined;
-    }
+    data[LAST_FOCUSED_PROGRAMMATICALLY] = undefined;
 
     target.dispatchEvent(event);
   };
