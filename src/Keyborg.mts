@@ -18,22 +18,7 @@ interface WindowWithKeyborg extends Window {
   };
 }
 
-// When a key from dismissKeys is pressed and the focus is not moved during
-// _dismissTimeout ms, keyboard navigation mode is dismissed.
-const _dismissTimeout = 500;
-
 let _lastId = 0;
-
-export interface KeyborgProps {
-  // Keys to be used to trigger keyboard navigation mode. By default, any key
-  // will trigger it. Could be limited to, for example, just Tab (or Tab and
-  // arrow keys).
-  triggerKeys?: number[];
-  // Keys to be used to dismiss keyboard navigation mode using keyboard (in
-  // addition to mouse clicks which dismiss it). For example, Esc could be used
-  // to dismiss.
-  dismissKeys?: number[];
-}
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
@@ -83,25 +68,10 @@ interface KeyborgInternal extends Keyborg {
   dispose(): void;
 }
 
-function createKeyborgCore(
-  targetWindow: WindowWithKeyborg,
-  props?: KeyborgProps,
-): KeyborgCoreHandle {
+function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
   let currentTargetWindow: WindowWithKeyborg | undefined = targetWindow;
   let isNavigating = false;
   let isMouseOrTouchUsedTimer: number | undefined;
-  let dismissTimer: number | undefined;
-  let triggerKeys: Set<number> | undefined;
-  let dismissKeys: Set<number> | undefined;
-
-  if (props) {
-    if (props.triggerKeys?.length) {
-      triggerKeys = new Set(props.triggerKeys);
-    }
-    if (props.dismissKeys?.length) {
-      dismissKeys = new Set(props.dismissKeys);
-    }
-  }
 
   const broadcast = (): void => {
     const refs = currentTargetWindow?.__keyborg?.refs;
@@ -128,42 +98,12 @@ function createKeyborgCore(
     }
     const active = currentTargetWindow?.document
       .activeElement as HTMLElement | null;
-    const isTriggerKey = !triggerKeys || triggerKeys.has(e.keyCode);
     const isEditable =
       active &&
       (active.tagName === "INPUT" ||
         active.tagName === "TEXTAREA" ||
         active.isContentEditable);
-    return isTriggerKey && !isEditable;
-  };
-
-  const shouldDismiss = (e: KeyboardEvent): boolean => {
-    return !!dismissKeys?.has(e.keyCode);
-  };
-
-  const scheduleDismiss = (): void => {
-    const targetWindow = currentTargetWindow;
-    if (!targetWindow) {
-      return;
-    }
-    if (dismissTimer) {
-      targetWindow.clearTimeout(dismissTimer);
-      dismissTimer = undefined;
-    }
-    const previousActiveElement = targetWindow.document.activeElement;
-    dismissTimer = targetWindow.setTimeout(() => {
-      dismissTimer = undefined;
-      const currentActiveElement = targetWindow.document.activeElement;
-      if (
-        previousActiveElement &&
-        currentActiveElement &&
-        previousActiveElement === currentActiveElement
-      ) {
-        // Esc was pressed, currently focused element hasn't changed.
-        // Just dismiss the keyboard navigation mode.
-        setNavigating(false);
-      }
-    }, _dismissTimeout);
+    return !isEditable;
   };
 
   const onFocusIn = (e: KeyborgFocusInEvent): void => {
@@ -216,11 +156,7 @@ function createKeyborgCore(
   };
 
   const onKeyDown = (e: KeyboardEvent): void => {
-    if (isNavigating) {
-      if (shouldDismiss(e)) {
-        scheduleDismiss();
-      }
-    } else if (shouldTrigger(e)) {
+    if (!isNavigating && shouldTrigger(e)) {
       setNavigating(true);
     }
   };
@@ -242,10 +178,6 @@ function createKeyborgCore(
     if (isMouseOrTouchUsedTimer) {
       currentTargetWindow.clearTimeout(isMouseOrTouchUsedTimer);
       isMouseOrTouchUsedTimer = undefined;
-    }
-    if (dismissTimer) {
-      currentTargetWindow.clearTimeout(dismissTimer);
-      dismissTimer = undefined;
     }
     disposeFocusEvent(currentTargetWindow);
     const targetDocument = currentTargetWindow.document;
@@ -281,7 +213,7 @@ function createKeyborgCore(
   };
 }
 
-export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
+export function createKeyborg(win: Window): Keyborg {
   const kwin = win as WindowWithKeyborg;
   const id = "k" + ++_lastId;
   let localWin: WindowWithKeyborg | undefined = kwin;
@@ -295,7 +227,7 @@ export function createKeyborg(win: Window, props?: KeyborgProps): Keyborg {
   if (existing) {
     core = existing.core;
   } else {
-    core = createKeyborgCore(kwin, props);
+    core = createKeyborgCore(kwin);
   }
 
   const instance: KeyborgInternal = {
