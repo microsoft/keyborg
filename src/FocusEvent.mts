@@ -43,12 +43,7 @@ export interface KeyborgFocusInEventDetails {
   originalEvent?: FocusEvent;
 }
 
-export interface KeyborgFocusInEvent extends CustomEvent<KeyborgFocusInEventDetails> {
-  /**
-   * @deprecated - used `event.detail`
-   */
-  details?: KeyborgFocusInEventDetails;
-}
+export type KeyborgFocusInEvent = CustomEvent<KeyborgFocusInEventDetails>;
 
 export interface KeyborgFocusOutEventDetails {
   originalEvent: FocusEvent;
@@ -228,9 +223,6 @@ export function setupFocusEvent(win: Window): void {
       composed: true,
       detail: details,
     });
-
-    // Tabster (and other users) can still use the legacy details field - keeping for backwards compat
-    event.details = details;
 
     details.isFocusedProgrammatically =
       target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
