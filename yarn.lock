@@ -2043,17 +2043,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/types@npm:8.60.1, @typescript-eslint/types@npm:^8.60.1":
+"@typescript-eslint/types@npm:8.60.1, @typescript-eslint/types@npm:^8.56.0, @typescript-eslint/types@npm:^8.60.1":
   version: 8.60.1
   resolution: "@typescript-eslint/types@npm:8.60.1"
   checksum: 10/c603417e621b5b1263c2f60fad9e202d560fd07fce7f40e9a356c0530e5eaf0ff1a9af865237bf93aa18a5a4e2f034ee0cce0fe6c070f08df33e35a099bdea47
-  languageName: node
-  linkType: hard
-
-"@typescript-eslint/types@npm:^8.56.0":
-  version: 8.59.2
-  resolution: "@typescript-eslint/types@npm:8.59.2"
-  checksum: 10/dc828a5c50debac37047a30ec5bfdc21e2b410c7c8c517c1ab01164fa9a0197f4f6b829f502dd992d21044442277029bfacf0c0b70d7ac9446977cbc8d375e13
   languageName: node
   linkType: hard
 
