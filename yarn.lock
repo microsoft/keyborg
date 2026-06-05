@@ -4113,7 +4113,7 @@ __metadata:
     react: "npm:^19.2.6"
     react-dom: "npm:^19.2.6"
     react-shadow: "npm:^20.6.0"
-    release-it: "npm:^20.0.0"
+    release-it: "npm:^20.2.0"
     storybook: "npm:^10.4.0"
     tsdown: "npm:^0.22"
     typescript: "npm:^6.0.3"
@@ -5241,9 +5241,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"release-it@npm:^20.0.0":
-  version: 20.0.1
-  resolution: "release-it@npm:20.0.1"
+"release-it@npm:^20.2.0":
+  version: 20.2.0
+  resolution: "release-it@npm:20.2.0"
   dependencies:
     "@inquirer/prompts": "npm:8.4.2"
     "@octokit/rest": "npm:22.0.1"
@@ -5270,7 +5270,7 @@ __metadata:
     yargs-parser: "npm:22.0.0"
   bin:
     release-it: bin/release-it.js
-  checksum: 10/01aaa80c394828cdb52cac447eabce75fa2a2a1113565d39785752d935c667340b26ae89e72930a6b261f14157b3f7fca97d707b87783711a9902d0be1cc9572
+  checksum: 10/063f8b050ebc2856aedde3ee663f1aec3aa112f415cd45eafa1c5a763abd6e72b4e988e2339c444dfa4b0d55b5bf0e8a0cb6cddd5b8055a6cb0a6bf575746f69
   languageName: node
   linkType: hard
 
