@@ -2,6 +2,9 @@
 # Variable 'prereleaseTag' was defined in the Variables tab
 # Variable 'publishVersion' was defined in the Variables tab
 
+pr: none
+trigger: none
+
 variables:
   - group: 'Github and NPM secrets'
   - name: tags
