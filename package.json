@@ -64,5 +64,11 @@
     "typescript-eslint": "^8.60.1",
     "vite": "^8.0.16"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.15.0",
+  "resolutions": {
+    "@vitest/expect": "4.1.8",
+    "@vitest/pretty-format": "4.1.8",
+    "@vitest/spy": "4.1.8",
+    "@vitest/utils": "4.1.8"
+  }
 }
