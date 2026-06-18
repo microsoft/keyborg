@@ -44,7 +44,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6",
-    "eslint": "^10.4.0",
+    "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import-x": "^4.16.2",
@@ -61,7 +61,7 @@
     "storybook": "^10.4.0",
     "tsdown": "^0.22",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.1",
+    "typescript-eslint": "^8.61.1",
     "vite": "^8.0.16"
   },
   "packageManager": "yarn@4.15.0"
