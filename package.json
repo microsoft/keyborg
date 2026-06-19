@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.61.0",
     "@storybook/react-vite": "^10.4.0",
     "@types/prop-types": "^15",
     "@types/react": "^19.2.14",
@@ -51,7 +51,7 @@
     "monosize": "^0.9.0",
     "monosize-bundler-webpack": "^0.4.0",
     "monosize-storage-git": "^0.3.4",
-    "playwright": "^1.60.0",
+    "playwright": "^1.61.0",
     "prettier": "^3.8.1",
     "prop-types": "^15",
     "react": "^19.2.6",
