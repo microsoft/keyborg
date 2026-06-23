@@ -15,7 +15,7 @@ npm install --save keyborg
 yarn add keyborg
 ```
 
-### Usage
+### Usage and Examples
 
 ```js
 import { createKeyborg } from "keyborg";
