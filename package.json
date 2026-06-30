@@ -57,7 +57,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-shadow": "^20.6.0",
-    "release-it": "^20.2.0",
+    "release-it": "^20.2.1",
     "storybook": "^10.4.6",
     "tsdown": "^0.22",
     "typescript": "^6.0.3",
