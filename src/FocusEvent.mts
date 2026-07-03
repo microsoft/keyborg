@@ -110,9 +110,7 @@ export function setupFocusEvent(win: Window): void {
     }
 
     let node: Node | null | undefined = e.composedPath()[0] as
-      | Node
-      | null
-      | undefined;
+      Node | null | undefined;
 
     const currentShadows: Set<ShadowRoot> = new Set();
 
