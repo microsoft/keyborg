@@ -2381,6 +2381,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"acorn@npm:^8.17.0":
+  version: 8.17.0
+  resolution: "acorn@npm:8.17.0"
+  bin:
+    acorn: bin/acorn
+  checksum: 10/2eea1588075124df569b15995423204055c5575ad992283025dddfcb557a0340de7d75cc1bc25dca8df148c60c4222e576e0e519965f0ec7f86f6085c8428824
+  languageName: node
+  linkType: hard
+
 "adm-zip@npm:^0.5.17":
   version: 0.5.17
   resolution: "adm-zip@npm:0.5.17"
@@ -3989,7 +3998,7 @@ __metadata:
     eslint-config-prettier: "npm:^10.1.8"
     eslint-import-resolver-typescript: "npm:^4.4.4"
     eslint-plugin-import-x: "npm:^4.17.0"
-    monosize: "npm:^0.9.0"
+    monosize: "npm:^0.10.0"
     monosize-bundler-webpack: "npm:^0.4.0"
     monosize-storage-git: "npm:^0.3.4"
     playwright: "npm:^1.61.0"
@@ -4362,6 +4371,24 @@ __metadata:
     monosize: "npm:^0.9.0"
     tslib: "npm:^2.4.1"
   checksum: 10/a6a3d40a223b9c2c6622f625b3076fc54e4830aa912a5227bc303aff07f4c5c7fad2596cf1651f099ce67e8dd554ce8d8814caba0176d2c5eed49e646294957d
+  languageName: node
+  linkType: hard
+
+"monosize@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "monosize@npm:0.10.0"
+  dependencies:
+    acorn: "npm:^8.17.0"
+    ci-info: "npm:^4.2.0"
+    cli-table3: "npm:^0.6.5"
+    empathic: "npm:^2.0.0"
+    pretty-bytes: "npm:^7.1.0"
+    tinyglobby: "npm:^0.2.13"
+    tslib: "npm:^2.4.1"
+    yargs: "npm:^18.0.0"
+  bin:
+    monosize: bin/monosize.mjs
+  checksum: 10/192319a74854feb4cb4fca0bd0d0fd49305ca38889b0197c738b89472eb152ba0fad22f85fb346ce8ae2fcdbd86b6da89eba7d06af7b7a0a670003c2c73ea10f
   languageName: node
   linkType: hard
 
