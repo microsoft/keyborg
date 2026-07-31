@@ -3937,7 +3937,7 @@ __metadata:
     monosize: "npm:^0.10.0"
     monosize-bundler-webpack: "npm:^0.4.1"
     monosize-storage-git: "npm:^0.3.5"
-    playwright: "npm:^1.61.0"
+    playwright: "npm:^1.62.0"
     prettier: "npm:^3.9.4"
     prop-types: "npm:^15"
     react: "npm:^19.2.6"
@@ -4853,7 +4853,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:1.61.0, playwright@npm:^1.61.0":
+"playwright-core@npm:1.62.0":
+  version: 1.62.0
+  resolution: "playwright-core@npm:1.62.0"
+  bin:
+    playwright-core: cli.js
+  checksum: 10/1cf036e9ed51ea80d311ac25a871dddbc57d5e7e7a5ad23fc2741452aa8406c95e820901ec38aeecc6fca2ddc383ccc8acb0e2f29a4c12942dd0a1a63e7134a2
+  languageName: node
+  linkType: hard
+
+"playwright@npm:1.61.0":
   version: 1.61.0
   resolution: "playwright@npm:1.61.0"
   dependencies:
@@ -4865,6 +4874,21 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10/b5faf97391315334a30e88e03216fd6090988b99896e71b341995a27c49d49dcebc825ec389dabc9b2d2cab6368c418cad9cbb925a88de35fb3b26a19bf05bea
+  languageName: node
+  linkType: hard
+
+"playwright@npm:^1.62.0":
+  version: 1.62.0
+  resolution: "playwright@npm:1.62.0"
+  dependencies:
+    fsevents: "npm:2.3.2"
+    playwright-core: "npm:1.62.0"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    playwright: cli.js
+  checksum: 10/52401b5f2b67abcb555c1b1c229e5204a3ac72a604343a99e60b00bd0cd46ad661a9471ced4e6c3ff39de957a0b1f413810d191ce81cd40e455700d73a6a80a5
   languageName: node
   linkType: hard
 
