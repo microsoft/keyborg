@@ -24,6 +24,10 @@ parameters:
       - patch
       - minor
       - major
+  - name: dryRun
+    displayName: Dry run (no publish or push)
+    type: boolean
+    default: false
 
 resources:
   repositories:
@@ -57,14 +61,11 @@ variables:
         ghaUserEmail: $[variables.grp_ghaUserEmail]
         ghaTokenAzureSubscription: $[variables.grp_ghaTokenAzureSubscription]
         ghaTokenKeyId: $[variables.grp_ghaTokenKeyId]
-  - ${{ if eq(parameters.prerelease, true) }}:
-      - name: npmDistTag
-        value: ${{ parameters.prereleaseTag }}
-        readonly: true
-  - ${{ else }}:
-      - name: npmDistTag
-        value: latest
-        readonly: true
+
+        ${{ if eq(parameters.prerelease, true) }}:
+          npmDistTag: ${{ parameters.prereleaseTag }}
+        ${{ else }}:
+          npmDistTag: latest
 
 extends:
   template: v1/Office.Official.PipelineTemplate.yml@OfficePipelineTemplates
@@ -109,21 +110,21 @@ extends:
               - script: mkdir -p '$(artifactPath)'
                 displayName: Create package artifact directory
 
+              # Temporarily bump the package version used by npm pack without committing or tagging.
               - ${{ if eq(parameters.prerelease, false) }}:
-                  # Temporarily bump the package version used by npm pack without committing or tagging.
                   - script: yarn release "$RELEASE_INCREMENT" --ci --no-git
                     displayName: Prepare official release
                     env:
                       RELEASE_INCREMENT: ${{ parameters.publishVersion }}
 
               - ${{ if eq(parameters.prerelease, true) }}:
-                  # Temporarily bump to the prerelease version used by npm pack without changing git.
                   - script: yarn release "$RELEASE_INCREMENT" --preRelease "$PRERELEASE_TAG" --ci --no-git
                     displayName: Prepare prerelease
                     env:
                       PRERELEASE_TAG: ${{ parameters.prereleaseTag }}
                       RELEASE_INCREMENT: ${{ parameters.publishVersion }}
 
+              # The build runs as a prepack script.
               - script: npm pack --pack-destination '$(artifactPath)'
                 displayName: Pack package
 
@@ -157,6 +158,7 @@ extends:
 
               - task: EsrpRelease@12
                 displayName: Publish to npm
+                condition: and(succeeded(), eq(${{ parameters.dryRun }}, false))
                 inputs:
                   connectedservicename: $(esrpReleaseAzureSubscription)
                   usemanagedidentity: false
@@ -202,6 +204,7 @@ extends:
                   azureSubscription: $(ghaTokenAzureSubscription)
                   scriptType: bash
                   scriptLocation: inlineScript
+                  # This is using the office-ogx-auth-helper app
                   inlineScript: |
                     yarn beachball-auth-helper create-github-app-token \
                       --app-client-id '$(ghaClientId)' \
@@ -211,14 +214,21 @@ extends:
                       --ci-output-name GITHUB_APP_TOKEN
 
               # Recreate the published version bump, then commit, tag, and push it with release-it.
+              # Auth relies on overwriting the persisted extraheader for the remote (a 1ES PT step
+              # forces persistCredentials: true). If the format changes later and pushing fails,
+              # debug by looking at the "Show environment" step output.
               - script: |
                   remote_url="`git remote get-url --push origin`"
                   auth_value="`printf 'x-access-token:%s' "$GITHUB_APP_TOKEN" | base64 | tr -d '\n'`"
                   header_key="http.${remote_url}.extraheader"
-                  original_header="`git config --get "$header_key"`"
+                  original_header="`git config --get "$header_key" || true`"
 
                   restore_header() {
-                    git config --replace-all "$header_key" "$original_header"
+                    if [[ -n "$original_header" ]]; then
+                      git config --replace-all "$header_key" "$original_header"
+                    else
+                      git config --unset-all "$header_key" || true
+                    fi
                   }
                   trap restore_header EXIT
 
@@ -230,6 +240,7 @@ extends:
                     yarn release "$RELEASE_INCREMENT" --ci
                   fi
                 displayName: Push package update
+                condition: and(succeeded(), eq(${{ parameters.dryRun }}, false))
                 env:
                   GITHUB_APP_TOKEN: $(createToken.GITHUB_APP_TOKEN)
                   RELEASE_INCREMENT: ${{ parameters.publishVersion }}

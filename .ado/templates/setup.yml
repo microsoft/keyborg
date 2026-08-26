@@ -11,15 +11,17 @@ steps:
       git config user.email '$(ghaUserEmail)'
     displayName: Configure git user
 
+  - script: echo 'registry=$(REGISTRY_URL)' >> .npmrc
+    displayName: Configure npm registry
+
   - script: |
       echo "node: `node -v`"
       echo "yarn: `yarn -v`"
       echo "npm: `npm -v`"
+      printenv | sort
       git --no-pager config list
+      npm config list
     displayName: Show environment
-
-  - script: echo 'registry=$(REGISTRY_URL)' >> .npmrc
-    displayName: Configure npm registry
 
   - task: npmAuthenticate@0
     displayName: Authenticate npm
@@ -29,5 +31,6 @@ steps:
   - script: yarn npm info keyborg
     displayName: Verify registry authentication
 
+  # Do NOT use corepack here: it's not needed with .yarn/releases checked in, and the network request would fail.
   - script: yarn install --immutable
     displayName: Install dependencies

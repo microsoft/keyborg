@@ -2,6 +2,7 @@
   "overrides": [
     {
       "files": ["*.yml"],
+      "excludeFiles": [".yarnrc.yml"],
       "options": {
         "singleQuote": true
       }
