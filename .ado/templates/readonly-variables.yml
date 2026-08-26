@@ -1,0 +1,10 @@
+parameters:
+  - name: variables
+    type: object
+    default: {}
+
+variables:
+  - ${{ each variable in parameters.variables }}:
+      - name: ${{ variable.key }}
+        value: ${{ variable.value }}
+        readonly: true

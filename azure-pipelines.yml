@@ -1,6 +1,12 @@
+# Build and pack a versioned package without changing git, publish that artifact through ESRP,
+# then rerun release-it from the original commit to push the matching version commit and tag.
+
+name: keyborg-release-$(Date:yyyy-MM-dd).$(Rev:rr)
+
 pr: none
 trigger: none
 
+# Version bump parameters are set at pipeline queue time.
 parameters:
   - name: prerelease
     displayName: Publish a prerelease
@@ -19,81 +25,219 @@ parameters:
       - minor
       - major
 
-variables:
-  - group: 'Github and NPM secrets'
-  - name: tags
-    value: production,externalfacing
-
 resources:
   repositories:
-    - repository: 1esPipelines
+    - repository: OfficePipelineTemplates
       type: git
-      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      name: 1ESPipelineTemplates/OfficePipelineTemplates
       ref: refs/tags/release
 
+variables:
+  - group: ogx-oss-release
+  - template: /.ado/templates/readonly-variables.yml
+    parameters:
+      variables:
+        tags: production
+        nodeVersion: 24
+        SHELLOPTS: braceexpand:hashall:interactive-comments:errexit:errtrace
+
+        REGISTRY_URL: https://pkgs.dev.azure.com/office/_packaging/Office/npm/registry/
+        YARN_NPM_REGISTRY_SERVER: $(REGISTRY_URL)
+        YARN_NPM_ALWAYS_AUTH: 1
+        YARN_NPMRC_AUTH_ENABLED: 1
+
+        esrpReleaseAzureSubscription: $[variables.grp_esrpReleaseAzureSubscription]
+        esrpReleaseClientId: $[variables.grp_esrpReleaseClientId]
+        esrpReleaseKeyVaultName: $[variables.grp_esrpReleaseKeyVaultName]
+        esrpReleaseTenantId: $[variables.grp_esrpReleaseTenantId]
+        esrpSecretNameAuthCert: $[variables.grp_esrpSecretNameAuthCert]
+        esrpSecretNameSignCert: $[variables.grp_esrpSecretNameSignCert]
+        ghaClientId: $[variables.grp_ghaClientId]
+        ghaUserName: $[variables.grp_ghaUserName]
+        ghaUserEmail: $[variables.grp_ghaUserEmail]
+        ghaTokenAzureSubscription: $[variables.grp_ghaTokenAzureSubscription]
+        ghaTokenKeyId: $[variables.grp_ghaTokenKeyId]
+  - ${{ if eq(parameters.prerelease, true) }}:
+      - name: npmDistTag
+        value: ${{ parameters.prereleaseTag }}
+        readonly: true
+  - ${{ else }}:
+      - name: npmDistTag
+        value: latest
+        readonly: true
+
 extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  template: v1/Office.Official.PipelineTemplate.yml@OfficePipelineTemplates
   parameters:
     pool:
       name: Azure-Pipelines-1ESPT-ExDShared
       image: windows-latest
-      os: windows # We need windows because compliance task only run on windows.
+      os: windows
+    featureFlags:
+      incrementalSDLSourceAnalysis: true
+    sdl:
+      codeql:
+        runSourceLanguagesInSourceAnalysis: true
+        enabledOnNonDefaultBranches: false
+    settings:
+      networkIsolationPolicy: AzureActiveDirectory,AzureKeyVault,AzureStorage,GitHub
+
     stages:
-      - stage: main
+      - stage: build
+        displayName: Build artifacts
         jobs:
-          - job: Release
+          - job: build
+            displayName: Build and pack
             pool:
-              name: '1ES-Host-Ubuntu'
-              image: '1ES-PT-Ubuntu-20.04'
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
               os: linux
             workspace:
               clean: all
+            variables:
+              - name: artifactPath
+                value: $(Build.StagingDirectory)/packed
+                readonly: true
             templateContext:
               outputs:
                 - output: pipelineArtifact
-                  targetPath: $(System.DefaultWorkingDirectory)
-                  artifactName: output
+                  artifactName: packed
+                  path: $(artifactPath)
             steps:
-              - checkout: self
-                clean: true
+              - template: /.ado/templates/setup.yml@self
 
-              - task: CmdLine@2
-                displayName: Re-attach head
+              - script: mkdir -p '$(artifactPath)'
+                displayName: Create package artifact directory
+
+              - ${{ if eq(parameters.prerelease, false) }}:
+                  # Temporarily bump the package version used by npm pack without committing or tagging.
+                  - script: yarn release "$RELEASE_INCREMENT" --ci --no-git
+                    displayName: Prepare official release
+                    env:
+                      RELEASE_INCREMENT: ${{ parameters.publishVersion }}
+
+              - ${{ if eq(parameters.prerelease, true) }}:
+                  # Temporarily bump to the prerelease version used by npm pack without changing git.
+                  - script: yarn release "$RELEASE_INCREMENT" --preRelease "$PRERELEASE_TAG" --ci --no-git
+                    displayName: Prepare prerelease
+                    env:
+                      PRERELEASE_TAG: ${{ parameters.prereleaseTag }}
+                      RELEASE_INCREMENT: ${{ parameters.publishVersion }}
+
+              - script: npm pack --pack-destination '$(artifactPath)'
+                displayName: Pack package
+
+              - script: ls -R '$(Build.StagingDirectory)'
+                displayName: Show output files
+
+      - stage: publish
+        displayName: Publish
+        dependsOn: build
+        jobs:
+          - job: npm_publish
+            displayName: Publish npm package
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            variables:
+              - name: artifactPath
+                value: $(Agent.BuildDirectory)/packed
+                readonly: true
+            templateContext:
+              type: releaseJob
+              isProduction: true
+              inputs:
+                - input: pipelineArtifact
+                  artifactName: packed
+                  targetPath: $(artifactPath)
+            steps:
+              - script: ls -R '$(artifactPath)'
+                displayName: Show artifact contents
+
+              - task: EsrpRelease@12
+                displayName: Publish to npm
                 inputs:
-                  script: |
-                    git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
-                    git pull
+                  connectedservicename: $(esrpReleaseAzureSubscription)
+                  usemanagedidentity: false
+                  keyvaultname: $(esrpReleaseKeyVaultName)
+                  authcertname: $(esrpSecretNameAuthCert)
+                  signcertname: $(esrpSecretNameSignCert)
+                  clientid: $(esrpReleaseClientId)
+                  domaintenantid: $(esrpReleaseTenantId)
+                  contenttype: npm
+                  productstate: $(npmDistTag)
+                  folderlocation: $(artifactPath)
+                  owners: marata@microsoft.com
+                  approvers: jukapsia@microsoft.com
 
-              - task: NodeTool@0
-                displayName: Use Node 24.x
-                inputs:
-                  versionSpec: 24.x
-
-              # Enabling corepack is not necessary with the locally committed yarnPath
-              - script: yarn install --immutable
-                displayName: yarn install
+      - stage: push
+        displayName: Push to git
+        dependsOn: publish
+        jobs:
+          - job: push
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            workspace:
+              clean: all
+            steps:
+              - template: /.ado/templates/setup.yml@self
 
               - script: |
-                  git config user.name "Keyborg Build"
-                  git config user.email "fluentui-internal@service.microsoft.com"
-                  git remote set-url origin "https://$(githubUser):$GITHUB_PAT@github.com/microsoft/keyborg.git"
-                displayName: Authenticate git for pushes
-                env:
-                  GITHUB_PAT: $(githubPAT)
+                  branch_name="${BUILD_SOURCEBRANCH#refs/heads/}"
+                  if [[ "$BUILD_SOURCEBRANCH" != refs/heads/* ]]; then
+                    echo "Release must run from a branch, not $BUILD_SOURCEBRANCH" >&2
+                    exit 1
+                  fi
+                  git checkout -B "$branch_name" "$BUILD_SOURCEVERSION"
+                  git branch --set-upstream-to="origin/$branch_name" "$branch_name"
+                displayName: Attach source branch
 
-              - script: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-                displayName: Write npmrc for publish token
-                env:
-                  NPM_TOKEN: $(npmToken)
+              - task: AzureCLI@2
+                name: createToken
+                displayName: Create GitHub App token
+                inputs:
+                  azureSubscription: $(ghaTokenAzureSubscription)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    yarn beachball-auth-helper create-github-app-token \
+                      --app-client-id '$(ghaClientId)' \
+                      --key-id '$(ghaTokenKeyId)' \
+                      --repository '$(Build.Repository.Name)' \
+                      --permissions contents:write \
+                      --ci-output-name GITHUB_APP_TOKEN
 
-              - script: yarn release ${{ parameters.publishVersion }} --ci
-                displayName: Publish (official)
-                condition: eq(${{ parameters.prerelease }}, false)
-                env:
-                  NPM_TOKEN: $(npmToken)
+              # Recreate the published version bump, then commit, tag, and push it with release-it.
+              - script: |
+                  remote_url="`git remote get-url --push origin`"
+                  auth_value="`printf 'x-access-token:%s' "$GITHUB_APP_TOKEN" | base64 | tr -d '\n'`"
+                  header_key="http.${remote_url}.extraheader"
+                  original_header="`git config --get "$header_key"`"
 
-              - script: yarn release ${{ parameters.publishVersion }} --preRelease ${{ parameters.prereleaseTag }} --ci
-                displayName: Publish (prerelease)
-                condition: eq(${{ parameters.prerelease }}, true)
+                  restore_header() {
+                    git config --replace-all "$header_key" "$original_header"
+                  }
+                  trap restore_header EXIT
+
+                  git config --replace-all "$header_key" "AUTHORIZATION: basic ${auth_value}"
+
+                  if [[ -n "${PRERELEASE_TAG:-}" ]]; then
+                    yarn release "$RELEASE_INCREMENT" --preRelease "$PRERELEASE_TAG" --ci
+                  else
+                    yarn release "$RELEASE_INCREMENT" --ci
+                  fi
+                displayName: Push package update
                 env:
-                  NPM_TOKEN: $(npmToken)
+                  GITHUB_APP_TOKEN: $(createToken.GITHUB_APP_TOKEN)
+                  RELEASE_INCREMENT: ${{ parameters.publishVersion }}
+                  ${{ if eq(parameters.prerelease, true) }}:
+                    PRERELEASE_TAG: ${{ parameters.prereleaseTag }}
+
+              - script: yarn beachball-auth-helper revoke-github-app-token
+                displayName: Revoke GitHub App token
+                condition: and(always(), ne(variables['createToken.GITHUB_APP_TOKEN'], ''))
+                env:
+                  TOKEN: $(createToken.GITHUB_APP_TOKEN)

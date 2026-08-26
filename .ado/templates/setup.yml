@@ -1,0 +1,33 @@
+steps:
+  - task: UseNode@1
+    displayName: Install Node.js $(nodeVersion)
+    retryCountOnTaskFailure: 1
+    inputs:
+      version: $(nodeVersion).x
+      checkLatest: false
+
+  - script: |
+      git config user.name '$(ghaUserName)'
+      git config user.email '$(ghaUserEmail)'
+    displayName: Configure git user
+
+  - script: |
+      echo "node: `node -v`"
+      echo "yarn: `yarn -v`"
+      echo "npm: `npm -v`"
+      git --no-pager config list
+    displayName: Show environment
+
+  - script: echo 'registry=$(REGISTRY_URL)' >> .npmrc
+    displayName: Configure npm registry
+
+  - task: npmAuthenticate@0
+    displayName: Authenticate npm
+    inputs:
+      workingFile: $(Build.SourcesDirectory)/.npmrc
+
+  - script: yarn npm info keyborg
+    displayName: Verify registry authentication
+
+  - script: yarn install --immutable
+    displayName: Install dependencies

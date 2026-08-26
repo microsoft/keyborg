@@ -33,7 +33,7 @@
     "test:serve": "storybook dev --port 3000 --no-open",
     "lint": "eslint src/ tests/",
     "lint:fix": "yarn lint --fix",
-    "prepublishOnly": "yarn lint && yarn format && yarn build",
+    "prepack": "yarn lint && yarn format && yarn build",
     "release": "release-it"
   },
   "devDependencies": {
@@ -44,6 +44,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6",
+    "beachball": "3.0.0-alpha.9",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
