@@ -35,7 +35,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
       - name: Save PR number
         run: echo ${{ github.event.number }} > pr.txt
 

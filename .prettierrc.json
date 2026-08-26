@@ -1,1 +1,10 @@
-{}
+{
+  "overrides": [
+    {
+      "files": ["*.yml"],
+      "options": {
+        "singleQuote": true
+      }
+    }
+  ]
+}
