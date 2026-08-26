@@ -1,9 +1,23 @@
-# Variable 'prerelease' was defined in the Variables tab
-# Variable 'prereleaseTag' was defined in the Variables tab
-# Variable 'publishVersion' was defined in the Variables tab
-
 pr: none
 trigger: none
+
+parameters:
+  - name: prerelease
+    displayName: Publish a prerelease
+    type: boolean
+    default: true
+  - name: prereleaseTag
+    displayName: Prerelease tag
+    type: string
+    default: canary
+  - name: publishVersion
+    displayName: Publish version
+    type: string
+    default: minor
+    values:
+      - patch
+      - minor
+      - major
 
 variables:
   - group: 'Github and NPM secrets'
@@ -42,53 +56,44 @@ extends:
             steps:
               - checkout: self
                 clean: true
-            
+
               - task: CmdLine@2
                 displayName: Re-attach head
                 inputs:
                   script: |
                     git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
                     git pull
-            
+
               - task: NodeTool@0
                 displayName: Use Node 24.x
                 inputs:
                   versionSpec: 24.x
-            
-              - task: CmdLine@2
+
+              # Enabling corepack is not necessary with the locally committed yarnPath
+              - script: yarn install --immutable
                 displayName: yarn install
-                inputs:
-                  script: |
-                    corepack enable
-                    yarn install --immutable
-            
-              - task: CmdLine@2
+
+              - script: |
+                  git config user.name "Keyborg Build"
+                  git config user.email "fluentui-internal@service.microsoft.com"
+                  git remote set-url origin "https://$(githubUser):$GITHUB_PAT@github.com/microsoft/keyborg.git"
                 displayName: Authenticate git for pushes
-                inputs:
-                  script: >-
-                    git config user.name "Keyborg Build"
-            
-                    git config user.email "fluentui-internal@service.microsoft.com"
-            
-                    git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/keyborg.git
-            
-              - task: CmdLine@2
+                env:
+                  GITHUB_PAT: $(githubPAT)
+
+              - script: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
                 displayName: Write npmrc for publish token
-                inputs:
-                  script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
-            
-              - task: CmdLine@2
+                env:
+                  NPM_TOKEN: $(npmToken)
+
+              - script: yarn release ${{ parameters.publishVersion }} --ci
                 displayName: Publish (official)
-                condition: eq(variables.prerelease, false)
-                inputs:
-                  script: 'yarn release $(publishVersion) --ci'
+                condition: eq(${{ parameters.prerelease }}, false)
                 env:
-                    NPM_TOKEN: $(npmToken)
-            
-              - task: CmdLine@2
+                  NPM_TOKEN: $(npmToken)
+
+              - script: yarn release ${{ parameters.publishVersion }} --preRelease ${{ parameters.prereleaseTag }} --ci
                 displayName: Publish (prerelease)
-                condition: eq(variables.prerelease, true)
-                inputs:
-                  script: yarn release $(publishVersion) --preRelease $(prereleaseTag) --ci
+                condition: eq(${{ parameters.prerelease }}, true)
                 env:
-                    NPM_TOKEN: $(npmToken)
+                  NPM_TOKEN: $(npmToken)
