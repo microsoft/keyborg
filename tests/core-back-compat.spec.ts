@@ -5,7 +5,11 @@
 
 import { test, expect } from "@playwright/test";
 
-import type { createKeyborg, disposeKeyborg } from "../src/index.mts";
+import type {
+  createKeyborg,
+  disposeKeyborg,
+  nativeFocus,
+} from "../src/index.mts";
 
 interface ForeignCore {
   isNavigatingWithKeyboard: boolean;
@@ -20,11 +24,99 @@ interface ForeignInstance {
 interface WindowWithKeyborgFactory extends Window {
   createKeyborg?: typeof createKeyborg;
   disposeKeyborg?: typeof disposeKeyborg;
+  nativeFocus?: typeof nativeFocus;
   __keyborg?: {
     core: ForeignCore;
     refs: Record<string, unknown>;
   };
 }
+
+test("supports a configurable getter-only focus descriptor", async ({
+  page,
+}) => {
+  await page.goto("/iframe.html?id=core-back-compat--default");
+  await expect(page.getByTestId("fixture")).toBeVisible();
+
+  const result = await page.evaluate(() => {
+    const win = window as WindowWithKeyborgFactory;
+    const create = win.createKeyborg;
+    const dispose = win.disposeKeyborg;
+    const callNativeFocus = win.nativeFocus;
+
+    if (!create || !dispose || !callNativeFocus) {
+      throw new Error("keyborg factories not exposed by fixture");
+    }
+
+    const proto = HTMLElement.prototype;
+    const initialDescriptor = Object.getOwnPropertyDescriptor(proto, "focus");
+
+    if (!initialDescriptor) {
+      throw new Error("expected HTMLElement.prototype.focus descriptor");
+    }
+
+    const originalFocus = initialDescriptor.get
+      ? (element: HTMLElement) => initialDescriptor.get?.call(element)
+      : () => initialDescriptor.value;
+    let getterCalls = 0;
+    const getter = function (this: HTMLElement) {
+      if (this === proto) {
+        throw new Error("focus getter invoked on HTMLElement.prototype");
+      }
+
+      getterCalls++;
+      return originalFocus(this);
+    };
+
+    Object.defineProperty(proto, "focus", {
+      configurable: true,
+      enumerable: initialDescriptor.enumerable,
+      get: getter,
+    });
+
+    try {
+      const keyborg = create(window);
+      const button = document.createElement("button");
+      document.body.append(button);
+      const programmaticFocus: Array<boolean | undefined> = [];
+      button.addEventListener("keyborg:focusin", (event) => {
+        programmaticFocus.push(
+          (event as CustomEvent<{ isFocusedProgrammatically?: boolean }>).detail
+            .isFocusedProgrammatically,
+        );
+      });
+
+      button.focus();
+      button.blur();
+      callNativeFocus(button);
+
+      dispose(keyborg);
+
+      const restoredDescriptor = Object.getOwnPropertyDescriptor(
+        proto,
+        "focus",
+      );
+
+      return {
+        getterCalls,
+        programmaticFocus,
+        restoredGetter: restoredDescriptor?.get === getter,
+        restoredSetter: restoredDescriptor?.set,
+        restoredConfigurable: restoredDescriptor?.configurable,
+        restoredEnumerable: restoredDescriptor?.enumerable,
+        expectedEnumerable: initialDescriptor.enumerable,
+      };
+    } finally {
+      Object.defineProperty(proto, "focus", initialDescriptor);
+    }
+  });
+
+  expect(result.getterCalls).toBe(2);
+  expect(result.programmaticFocus).toEqual([true, false]);
+  expect(result.restoredGetter).toBe(true);
+  expect(result.restoredSetter).toBeUndefined();
+  expect(result.restoredConfigurable).toBe(true);
+  expect(result.restoredEnumerable).toBe(result.expectedEnumerable);
+});
 
 // Verifies that `createKeyborg` interoperates with a foreign `__keyborg.core`
 // using a property-accessor `isNavigatingWithKeyboard` and a `dispose()`

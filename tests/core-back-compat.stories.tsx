@@ -5,11 +5,12 @@
 
 import * as React from "react";
 
-import { createKeyborg, disposeKeyborg } from "../src/index.mts";
+import { createKeyborg, disposeKeyborg, nativeFocus } from "../src/index.mts";
 
 interface WindowWithKeyborgFactory extends Window {
   createKeyborg?: typeof createKeyborg;
   disposeKeyborg?: typeof disposeKeyborg;
+  nativeFocus?: typeof nativeFocus;
 }
 
 const meta = { title: "Core Back Compat" };
@@ -20,5 +21,6 @@ export default meta;
 export const Default = () => {
   (window as WindowWithKeyborgFactory).createKeyborg = createKeyborg;
   (window as WindowWithKeyborgFactory).disposeKeyborg = disposeKeyborg;
+  (window as WindowWithKeyborgFactory).nativeFocus = nativeFocus;
   return <div data-testid="fixture">core back compat fixture</div>;
 };
