@@ -1,9 +1,24 @@
-# Variable 'prerelease' was defined in the Variables tab
-# Variable 'prereleaseTag' was defined in the Variables tab
-# Variable 'publishVersion' was defined in the Variables tab
-
 pr: none
 trigger: none
+
+parameters:
+  - name: publishVersion
+    displayName: Version increment
+    type: string
+    default: patch
+    values:
+      - patch
+      - minor
+      - major
+      - prerelease
+  - name: prerelease
+    displayName: Publish a prerelease
+    type: boolean
+    default: false
+  - name: prereleaseTag
+    displayName: Prerelease tag
+    type: string
+    default: canary
 
 variables:
   - group: 'Github and NPM secrets'
@@ -42,6 +57,7 @@ extends:
             steps:
               - checkout: self
                 clean: true
+                persistCredentials: true
             
               - task: CmdLine@2
                 displayName: Re-attach head
@@ -63,32 +79,45 @@ extends:
                     yarn install --immutable
             
               - task: CmdLine@2
-                displayName: Authenticate git for pushes
+                displayName: Configure git identity
                 inputs:
                   script: >-
                     git config user.name "Keyborg Build"
             
                     git config user.email "fluentui-internal@service.microsoft.com"
             
-                    git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/keyborg.git
-            
               - task: CmdLine@2
                 displayName: Write npmrc for publish token
                 inputs:
                   script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+
+              - task: CmdLine@2
+                displayName: Validate release parameters
+                condition: and(succeeded(), eq('${{ parameters.publishVersion }}', 'prerelease'), eq(${{ parameters.prerelease }}, false))
+                inputs:
+                  script: |
+                    echo "The prerelease increment requires 'Publish a prerelease' to be enabled."
+                    exit 1
             
               - task: CmdLine@2
                 displayName: Publish (official)
-                condition: eq(variables.prerelease, false)
+                condition: and(succeeded(), eq(${{ parameters.prerelease }}, false))
                 inputs:
-                  script: 'yarn release $(publishVersion) --ci'
+                  script: |
+                    yarn release "$RELEASE_INCREMENT" --ci
+                    git push --follow-tags
                 env:
-                    NPM_TOKEN: $(npmToken)
+                  NPM_TOKEN: $(npmToken)
+                  RELEASE_INCREMENT: ${{ parameters.publishVersion }}
             
               - task: CmdLine@2
                 displayName: Publish (prerelease)
-                condition: eq(variables.prerelease, true)
+                condition: and(succeeded(), eq(${{ parameters.prerelease }}, true))
                 inputs:
-                  script: yarn release $(publishVersion) --preRelease $(prereleaseTag) --ci
+                  script: |
+                    yarn release "$RELEASE_INCREMENT" --preRelease "$PRERELEASE_TAG" --ci
+                    git push --follow-tags
                 env:
-                    NPM_TOKEN: $(npmToken)
+                  NPM_TOKEN: $(npmToken)
+                  PRERELEASE_TAG: ${{ parameters.prereleaseTag }}
+                  RELEASE_INCREMENT: ${{ parameters.publishVersion }}
