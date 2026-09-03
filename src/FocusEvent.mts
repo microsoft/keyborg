@@ -10,9 +10,13 @@ export const KEYBORG_FOCUSOUT = "keyborg:focusout";
 
 interface KeyborgFocus {
   /**
-   * This is the native `focus` function that is retained so that it can be restored when keyborg is disposed
+   * Calls the original `focus` implementation without marking focus as programmatic.
    */
   __keyborgNativeFocus?: (options?: FocusOptions | undefined) => void;
+  /**
+   * The original descriptor, retained so it can be restored when keyborg is disposed.
+   */
+  __keyborgFocusDescriptor?: PropertyDescriptor;
 }
 
 // Internal data stored on `window.__keyborgData` as a tuple. Nothing outside
@@ -71,14 +75,23 @@ export function setupFocusEvent(win: Window): void {
   const kwin = win as WindowWithKeyborgFocusEvent;
   const doc = kwin.document;
   const proto = kwin.HTMLElement.prototype;
-  const origFocus = proto.focus;
+  const origFocusDescriptor = Object.getOwnPropertyDescriptor(proto, "focus");
+  const currentFocus = origFocusDescriptor?.value as KeyborgFocus | undefined;
 
-  if ((origFocus as KeyborgFocus).__keyborgNativeFocus) {
+  if (currentFocus?.__keyborgNativeFocus) {
     // Already set up.
     return;
   }
 
-  proto.focus = focus;
+  (focus as KeyborgFocus).__keyborgNativeFocus = callNativeFocus;
+  (focus as KeyborgFocus).__keyborgFocusDescriptor = origFocusDescriptor;
+
+  Object.defineProperty(proto, "focus", {
+    configurable: origFocusDescriptor?.configurable ?? true,
+    enumerable: origFocusDescriptor?.enumerable ?? false,
+    writable: true,
+    value: focus,
+  });
 
   const shadowTargets: Set<WeakRef<ShadowRoot>> = new Set();
 
@@ -248,7 +261,20 @@ export function setupFocusEvent(win: Window): void {
     }
 
     // eslint-disable-next-line prefer-rest-params
-    return origFocus.apply(this, arguments);
+    return callNativeFocus.apply(this, arguments);
+  }
+
+  function callNativeFocus(this: HTMLElement) {
+    const originalFocus = origFocusDescriptor?.get
+      ? origFocusDescriptor.get.call(this)
+      : origFocusDescriptor?.value;
+
+    if (typeof originalFocus !== "function") {
+      throw new TypeError("HTMLElement.prototype.focus is not callable");
+    }
+
+    // eslint-disable-next-line prefer-rest-params
+    return originalFocus.apply(this, arguments);
   }
 
   let activeElement = doc.activeElement as Element | null;
@@ -260,8 +286,6 @@ export function setupFocusEvent(win: Window): void {
     onFocusIn(activeElement);
     activeElement = activeElement.shadowRoot.activeElement;
   }
-
-  (focus as KeyborgFocus).__keyborgNativeFocus = origFocus;
 }
 
 /**
@@ -271,7 +295,9 @@ export function setupFocusEvent(win: Window): void {
 export function disposeFocusEvent(win: Window): void {
   const kwin = win as WindowWithKeyborgFocusEvent;
   const proto = kwin.HTMLElement.prototype;
-  const origFocus = (proto.focus as KeyborgFocus).__keyborgNativeFocus;
+  const focusDescriptor = Object.getOwnPropertyDescriptor(proto, "focus");
+  const focus = focusDescriptor?.value as KeyborgFocus | undefined;
+  const origFocusDescriptor = focus?.__keyborgFocusDescriptor;
   const data = kwin.__keyborgData;
 
   if (data) {
@@ -293,8 +319,12 @@ export function disposeFocusEvent(win: Window): void {
     delete kwin.__keyborgData;
   }
 
-  if (origFocus) {
-    proto.focus = origFocus;
+  if (focus?.__keyborgNativeFocus) {
+    if (origFocusDescriptor) {
+      Object.defineProperty(proto, "focus", origFocusDescriptor);
+    } else {
+      delete proto.focus;
+    }
   }
 }
 
