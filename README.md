@@ -38,12 +38,34 @@ keyborg.unsubscribe(handler);
 
 ## Contributing
 
-Pretty simple currently, you only need to know about theese commands
+Use Node.js 24.x (24.11.0 or newer) and Corepack to run the Yarn release pinned
+by version and integrity hash in `package.json`. The Yarn executable is downloaded
+to Corepack's machine-local cache instead of being committed to the repository.
 
-- `npm install` - install dependencies
-- `npm run build` - builds the library
-- `npm run format:fix` - runs prettier to format code
-- `npm run lint:fix` - runs eslint and fixes issues
+- `corepack enable yarn` - enable the Yarn shim
+- `corepack install` - download and verify the pinned Yarn release
+- `yarn install --immutable` - install dependencies from the lockfile
+- `yarn build` - builds the library
+- `yarn format:fix` - runs prettier to format code
+- `yarn lint:fix` - runs eslint and fixes issues
+
+If another globally installed Yarn takes precedence on your `PATH`, use
+`corepack yarn <command>` to invoke the pinned release explicitly.
+
+If you use an npm registry mirror, set `YARN_NPM_REGISTRY_SERVER` to its URL.
+To download Yarn through a mirror too, set `COREPACK_NPM_REGISTRY` to a registry
+that supports version-specific package metadata requests. Otherwise, Corepack
+downloads Yarn from its official distribution endpoint.
+
+To update Yarn, run `corepack use yarn@<version>` and commit the updated
+`packageManager` field. Do not add `yarnPath` or a Yarn executable to the repository.
+
+Public pull-request CI enables Yarn's hardened mode, which refreshes lockfile
+metadata against the CI registry. When updating dependencies, also validate with
+`YARN_ENABLE_HARDENED_MODE=1`; a normal immutable install or `--check-cache` alone
+does not cover metadata differences between a registry mirror and CI.
+
+TypeScript remains on 6.0 until typescript-eslint supports TypeScript 7.
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us

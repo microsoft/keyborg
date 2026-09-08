@@ -59,8 +59,7 @@ extends:
                 displayName: yarn install
                 inputs:
                   script: |
-                    corepack enable
-                    yarn install --immutable
+                    corepack enable yarn && corepack install && yarn install --immutable
             
               - task: CmdLine@2
                 displayName: Authenticate git for pushes
