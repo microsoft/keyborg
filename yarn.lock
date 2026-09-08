@@ -3280,8 +3280,8 @@ __metadata:
     source-map:
       optional: true
   bin:
-    escodegen: ./bin/escodegen.js
-    esgenerate: ./bin/esgenerate.js
+    escodegen: bin/escodegen.js
+    esgenerate: bin/esgenerate.js
   checksum: 10/47719a65b2888b4586e3fa93769068b275961c13089e90d5d01a96a6e8e95871b1c3893576814c8fbf08a4a31a496f37e7b2c937cf231270f4d81de012832c7c
   languageName: node
   linkType: hard
@@ -3428,7 +3428,7 @@ __metadata:
     jiti:
       optional: true
   bin:
-    eslint: ./bin/eslint.js
+    eslint: bin/eslint.js
   checksum: 10/4cee237c7d2c445a05330e595b18521d7452fd3f419241bf1ccf81c769a6761c10ca5a06988197482d4842ed1a26b1dcb51b9526408990cee84559e6c08cb3ab
   languageName: node
   linkType: hard
@@ -3702,7 +3702,7 @@ __metadata:
   version: 3.3.1
   resolution: "giget@npm:3.3.1"
   bin:
-    giget: ./dist/cli.mjs
+    giget: dist/cli.mjs
   checksum: 10/94601ade8152e1e4b68f35b7b1fa90dbe9ecf0da8f575c5c9805b68842d6150be641365100f59e97ee6fda8959722ec1d250bf7d13ccb14ccc617b300b8445d7
   languageName: node
   linkType: hard
@@ -3878,7 +3878,7 @@ __metadata:
   version: 3.0.0
   resolution: "is-docker@npm:3.0.0"
   bin:
-    is-docker: ./cli.js
+    is-docker: cli.js
   checksum: 10/b698118f04feb7eaf3338922bd79cba064ea54a1c3db6ec8c0c8d8ee7613e7e5854d802d3ef646812a8a3ace81182a085dfa0a71cc68b06f3fa794b9783b3c90
   languageName: node
   linkType: hard
@@ -3919,7 +3919,7 @@ __metadata:
   dependencies:
     is-docker: "npm:^3.0.0"
   bin:
-    is-inside-container: ./cli.js
+    is-inside-container: cli.js
   checksum: 10/c50b75a2ab66ab3e8b92b3bc534e1ea72ca25766832c0623ac22d134116a98bcf012197d1caabe1d1c4bd5f84363d4aa5c36bb4b585fbcaf57be172cd10a1a03
   languageName: node
   linkType: hard
@@ -3998,7 +3998,7 @@ __metadata:
   version: 2.7.0
   resolution: "jiti@npm:2.7.0"
   bin:
-    jiti: ./lib/jiti-cli.mjs
+    jiti: lib/jiti-cli.mjs
   checksum: 10/6d75a8dbd61dbee031aa0937fabb748ff8ddf370b971958cc704f5cf26b4c5bdc9dcd0563059b2627a2bd41d946fa0bc64f912fdc8981ca7945a9d63c74ad0f9
   languageName: node
   linkType: hard
@@ -4515,7 +4515,7 @@ __metadata:
     tslib: "npm:^2.4.1"
     yargs: "npm:^18.0.0"
   bin:
-    monosize: ./bin/monosize.mjs
+    monosize: bin/monosize.mjs
   checksum: 10/192319a74854feb4cb4fca0bd0d0fd49305ca38889b0197c738b89472eb152ba0fad22f85fb346ce8ae2fcdbd86b6da89eba7d06af7b7a0a670003c2c73ea10f
   languageName: node
   linkType: hard
@@ -4538,7 +4538,7 @@ __metadata:
   version: 3.3.18
   resolution: "nanoid@npm:3.3.18"
   bin:
-    nanoid: ./bin/nanoid.cjs
+    nanoid: bin/nanoid.cjs
   checksum: 10/1b3b4fdac831b92b56d1dbe8b1e63a372432faf86ea383134e3b53141ef8108a60b7f84343b5cefecac9550bb74edf8164da93ea07d1c4f757039bc75d8a5d9e
   languageName: node
   linkType: hard
@@ -4547,7 +4547,7 @@ __metadata:
   version: 0.3.4
   resolution: "napi-postinstall@npm:0.3.4"
   bin:
-    napi-postinstall: ./lib/cli.js
+    napi-postinstall: lib/cli.js
   checksum: 10/5541381508f9e1051ff3518701c7130ebac779abb3a1ffe9391fcc3cab4cc0569b0ba0952357db3f6b12909c3bb508359a7a60261ffd795feebbdab967175832
   languageName: node
   linkType: hard
@@ -4597,7 +4597,7 @@ __metadata:
     undici: "npm:^8.4.1"
     which: "npm:^7.0.0"
   bin:
-    node-gyp: ./bin/node-gyp.js
+    node-gyp: bin/node-gyp.js
   checksum: 10/018ca69386d40576c0ab4bb556dc3ecf40a06a260174a8f5d50da9a592d0a90bd5cf936ca481f19de7ccb7f79dc801d17032d8e2b70963194965a1cc79f8063e
   languageName: node
   linkType: hard
@@ -5050,7 +5050,7 @@ __metadata:
   version: 3.9.6
   resolution: "prettier@npm:3.9.6"
   bin:
-    prettier: ./bin/prettier.cjs
+    prettier: bin/prettier.cjs
   checksum: 10/1dd1a1e0e40ec3b91cda9d294c4a95022aef61880ca3f441aad99b1252279f58a766c4cece81132c01550dcff1fd445efbd8812ea4a2374313e7fc6c8136f11f
   languageName: node
   linkType: hard
@@ -5321,7 +5321,7 @@ __metadata:
     path-parse: "npm:^1.0.7"
     supports-preserve-symlinks-flag: "npm:^1.0.0"
   bin:
-    resolve: ./bin/resolve
+    resolve: bin/resolve
   checksum: 10/1d2a081e4b7198e2a70abd7bbbf8aea5380c2d074b6c870035aab50ebfb7312b6492b3588e752faef83a75147862a3d3e09b222bc9afd536804181fd3a515ef9
   languageName: node
   linkType: hard
@@ -5335,7 +5335,7 @@ __metadata:
     path-parse: "npm:^1.0.7"
     supports-preserve-symlinks-flag: "npm:^1.0.0"
   bin:
-    resolve: ./bin/resolve
+    resolve: bin/resolve
   checksum: 10/7c0ee8a1bd6126d7adde06b8cbba7578f6b791560200cd235b696106b9803038fcf680f0273b350a4e9476de1a5194a9a77827cb08e10d80bea38f4d63b1d254
   languageName: node
   linkType: hard
@@ -5490,7 +5490,7 @@ __metadata:
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
-    semver: ./bin/semver.js
+    semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
   languageName: node
   linkType: hard
@@ -5954,8 +5954,8 @@ __metadata:
   version: 6.0.3
   resolution: "typescript@npm:6.0.3"
   bin:
-    tsc: ./bin/tsc
-    tsserver: ./bin/tsserver
+    tsc: bin/tsc
+    tsserver: bin/tsserver
   checksum: 10/0ef2357a4cffd916b52b683a021cdab0f81eea4e9aa35f2d254581c9a5106da02224e3392e1b0ed42b7a48f80c966e5f52b8e1a27941fa0523c1705a9c2e0330
   languageName: node
   linkType: hard
@@ -5964,8 +5964,8 @@ __metadata:
   version: 6.0.3
   resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
   bin:
-    tsc: ./bin/tsc
-    tsserver: ./bin/tsserver
+    tsc: bin/tsc
+    tsserver: bin/tsserver
   checksum: 10/22b67a18dafedf9b1468b64ca20d9aa02ea61d449b65413d8aa6552aeb63f52ef369e86beb25b6b4c91a803d9726ee5c196f391a9b64201263263410a4223ee6
   languageName: node
   linkType: hard
@@ -6271,7 +6271,7 @@ __metadata:
   dependencies:
     isexe: "npm:^4.0.0"
   bin:
-    node-which: ./bin/which.js
+    node-which: bin/which.js
   checksum: 10/913a43ac10df37602ba9795a004dd7ab12ba7dd592aca1f08ec333be1fdd6a49bbf119a88c3f8d0ea70eeb6251726e77069251424d73000299a0a840ed000732
   languageName: node
   linkType: hard

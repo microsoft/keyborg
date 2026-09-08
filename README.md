@@ -60,6 +60,11 @@ downloads Yarn from its official distribution endpoint.
 To update Yarn, run `corepack use yarn@<version>` and commit the updated
 `packageManager` field. Do not add `yarnPath` or a Yarn executable to the repository.
 
+Public pull-request CI enables Yarn's hardened mode, which refreshes lockfile
+metadata against the CI registry. When updating dependencies, also validate with
+`YARN_ENABLE_HARDENED_MODE=1`; a normal immutable install or `--check-cache` alone
+does not cover metadata differences between a registry mirror and CI.
+
 TypeScript remains on 6.0 until typescript-eslint supports TypeScript 7.
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
