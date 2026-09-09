@@ -1,4 +1,10 @@
 {
   "editor.formatOnSave": true,
-  "prettier.configPath": ".prettierrc.json"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.configPath": ".prettierrc.json",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/*.code-search": true,
+    "**/.yarn": true
+  }
 }

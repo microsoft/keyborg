@@ -8,9 +8,9 @@ permissions:
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,11 +30,6 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-
-      - name: Enable Corepack
-        run: |
-          corepack enable yarn
-          corepack install
 
       - name: Restore Yarn cache
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -57,7 +52,7 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: "Check for unstaged changes"
+      - name: Check for unstaged changes
         run: |
           git status --porcelain
           git diff-index --quiet HEAD -- || exit 1
