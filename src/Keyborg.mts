@@ -18,7 +18,17 @@ interface WindowWithKeyborg extends Window {
   };
 }
 
-let _lastId = 0;
+function generateId(): string {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+
+  let id = "";
+  for (let i = 0; i < arr.length; i++) {
+    id += arr[i].toString(16).padStart(2, "0");
+  }
+
+  return id;
+}
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
@@ -215,7 +225,7 @@ function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
 
 export function createKeyborg(win: Window): Keyborg {
   const kwin = win as WindowWithKeyborg;
-  const id = "k" + ++_lastId;
+  const id = generateId();
   let localWin: WindowWithKeyborg | undefined = kwin;
   let core: KeyborgCoreHandle | undefined;
   // `callbacks` is exposed as `instance._cb` to satisfy the slot wire
