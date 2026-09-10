@@ -95,11 +95,16 @@ extends:
 
               # Locally update the package version and changelog, without committing or publishing.
               - ${{ if eq(parameters.prerelease, false) }}:
-                  - script: yarn release --no-git '${{ parameters.publishVersion }}'
+                  - script: yarn release --no-git "$RELEASE_INCREMENT"
                     displayName: Prepare official release
+                    env:
+                      RELEASE_INCREMENT: ${{ parameters.publishVersion }}
               - ${{ else }}:
-                  - script: yarn release --no-git '${{ parameters.publishVersion }}' --preRelease '${{ parameters.prereleaseTag }}'
+                  - script: yarn release --no-git "$RELEASE_INCREMENT" --preRelease "$PRERELEASE_TAG"
                     displayName: Prepare prerelease
+                    env:
+                      RELEASE_INCREMENT: ${{ parameters.publishVersion }}
+                      PRERELEASE_TAG: ${{ parameters.prereleaseTag }}
 
               # The build runs as a prepack script.
               - script: |
@@ -189,18 +194,14 @@ extends:
 
               # Recreate the published version bump, then commit, tag, and push it with release-it.
               # Authenticate as the github app by overriding the persisted extraheader (a 1ES PT
-              # step forces persistCredentials: true). As of writing the header is under
-              # "http.https://github.com/microsoft/keyborg.extraheader" - if pushing fails, check
-              # the "Show environment" step output to see if the format changed.
+              # step forces persistCredentials: true).
               - script: |
-                  remote_url="`git remote get-url --push origin`"
-                  config_key="http.${remote_url%.git}.extraheader"
                   auth_value="`printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n'`"
 
                   export GIT_CONFIG_COUNT=2
-                  export GIT_CONFIG_KEY_0="${config_key}"
+                  export GIT_CONFIG_KEY_0="$HEADER_KEY"
                   export GIT_CONFIG_VALUE_0=""
-                  export GIT_CONFIG_KEY_1="${config_key}"
+                  export GIT_CONFIG_KEY_1="$HEADER_KEY"
                   export GIT_CONFIG_VALUE_1="AUTHORIZATION: basic ${auth_value}"
 
                   if [[ -n "${PRERELEASE_TAG:-}" ]]; then
@@ -212,6 +213,9 @@ extends:
                 condition: and(succeeded(), eq(${{ parameters.dryRun }}, false))
                 env:
                   GITHUB_TOKEN: $(createToken.GITHUB_TOKEN)
+                  # If pushing fails, check the "Show environment" step output to see if the format
+                  # of the persisted header key has changed.
+                  HEADER_KEY: http.https://github.com/microsoft/keyborg.extraheader
                   RELEASE_INCREMENT: ${{ parameters.publishVersion }}
                   ${{ if eq(parameters.prerelease, true) }}:
                     PRERELEASE_TAG: ${{ parameters.prereleaseTag }}

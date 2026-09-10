@@ -1,8 +1,11 @@
 steps:
+  # Re-attach HEAD for release-it, but don't pull, to ensure that every stage uses the
+  # original Build.SourceVersion (in case a new commit was pushed during the release).
   - script: |
-      git checkout --track "origin/${BUILD_SOURCEBRANCH#refs/heads/}"
-      git pull
-    displayName: Re-attach head
+      branch="${BUILD_SOURCEBRANCH#refs/heads/}"
+      git checkout -b "$branch"
+      git branch --set-upstream-to="origin/$branch" "$branch"
+    displayName: Re-attach HEAD
 
   - task: UseNode@1
     displayName: Install Node.js $(nodeVersion)

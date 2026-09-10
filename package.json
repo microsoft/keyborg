@@ -34,7 +34,7 @@
     "lint": "eslint src/ tests/",
     "lint:fix": "yarn lint --fix",
     "prepack": "yarn lint && yarn format && yarn build",
-    "release": "release-it --no-npm"
+    "release": "release-it --no-npm.publish"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
