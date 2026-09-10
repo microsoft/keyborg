@@ -2757,14 +2757,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"beachball@npm:3.0.0-alpha.9":
-  version: 3.0.0-alpha.9
-  resolution: "beachball@npm:3.0.0-alpha.9"
+"beachball@npm:3.0.0-alpha.10":
+  version: 3.0.0-alpha.10
+  resolution: "beachball@npm:3.0.0-alpha.10"
   dependencies:
     "@vercel/detect-agent": "npm:^1.2.1"
     commander: "npm:^14.0.3"
     nano-spawn: "npm:^2.1.0"
-    p-graph: "npm:^3.0.0-alpha.6"
+    p-graph: "npm:^3.0.0-alpha.7"
     p-limit: "npm:^3.1.0"
     prompts: "npm:^2.4.2"
     semver: "npm:^7.7.4"
@@ -2772,7 +2772,7 @@ __metadata:
   bin:
     beachball: bin/beachball.js
     beachball-auth-helper: bin/beachball-auth-helper.js
-  checksum: 10/e5f25a4e0e891805e1d123c0646ec401bd602892a5d1093ace3e24856431c9f41658c8af982e1f2935767c9b3f5321e1467654fc69a36e65dae7254809c06ca9
+  checksum: 10/cd417e7eb6f27ce65594f768c0764d0b76e070d56cd9089158afccd12d0ecbf660ce280664bc4d1d812e3ddce5ab29b54266c9385f658f7f5880e5dd695de9c7
   languageName: node
   linkType: hard
 
@@ -4229,7 +4229,7 @@ __metadata:
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.5"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    beachball: "npm:3.0.0-alpha.9"
+    beachball: "npm:3.0.0-alpha.10"
     eslint: "npm:^10.9.1"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-import-resolver-typescript: "npm:^4.4.5"
@@ -5032,10 +5032,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-graph@npm:^3.0.0-alpha.6":
-  version: 3.0.0-alpha.6
-  resolution: "p-graph@npm:3.0.0-alpha.6"
-  checksum: 10/028bbb754006b666c218a87738b92516c34f02134d49b02e641456d7c906a28657ab8b1067854bec985c15f5787a6688df91e9db56249e6acd014b5657efc973
+"p-graph@npm:^3.0.0-alpha.7":
+  version: 3.0.0-alpha.7
+  resolution: "p-graph@npm:3.0.0-alpha.7"
+  checksum: 10/677a9d81d7ebfb0d238071cb7e7481f83404d790b01ee2d24a794de0cee97059ca5fc8d011b3918dfb82f2b9f9c13c0a67498abe02d23502dc928e0653a96899
   languageName: node
   linkType: hard
 
