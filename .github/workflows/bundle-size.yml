@@ -22,11 +22,6 @@ jobs:
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: |
-          corepack enable yarn
-          corepack install
-
       - name: Restore Yarn cache
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -43,7 +38,6 @@ jobs:
         run: npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > pr.txt

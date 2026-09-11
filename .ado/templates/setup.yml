@@ -1,0 +1,43 @@
+steps:
+  # Re-attach HEAD for release-it, but don't pull, to ensure that every stage uses the
+  # original Build.SourceVersion (in case a new commit was pushed during the release).
+  - script: |
+      branch="${BUILD_SOURCEBRANCH#refs/heads/}"
+      git checkout -b "$branch"
+      git branch --set-upstream-to="origin/$branch" "$branch"
+    displayName: Re-attach HEAD
+
+  - task: UseNode@1
+    displayName: Install Node.js $(nodeVersion)
+    inputs:
+      version: $(nodeVersion).x
+
+  - script: |
+      git config user.name "OGX bot"
+      git config user.email 57645319+office-ogx-auth-helper[bot]@users.noreply.github.com
+    displayName: Configure git user
+
+  # Configure npm to use the internal feed from REGISTRY_URL.
+  - script: echo 'registry=$(REGISTRY_URL)' >> .npmrc
+    displayName: Configure npm registry
+
+  - script: |
+      echo "node: `node -v`"
+      echo "yarn: `yarn -v`"
+      echo "npm: `npm -v`"
+      printenv | sort
+      git --no-pager config list
+      npm config list
+    displayName: Show environment
+
+  - task: npmAuthenticate@0
+    displayName: Authenticate npm
+    inputs:
+      workingFile: $(Build.SourcesDirectory)/.npmrc
+
+  # yarn install's auth errors can be very unclear, so do a quick check first.
+  - script: yarn npm info keyborg
+    displayName: Verify registry authentication
+
+  - script: yarn install --immutable
+    displayName: Install dependencies
