@@ -215,7 +215,11 @@ function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
 
 export function createKeyborg(win: Window): Keyborg {
   const kwin = win as WindowWithKeyborg;
-  const id = "k" + ++_lastId;
+  // Avoid legacy kN IDs and collisions with independently loaded copies.
+  let id: string;
+  do {
+    id = "k-" + ++_lastId;
+  } while (kwin.__keyborg?.refs[id]);
   let localWin: WindowWithKeyborg | undefined = kwin;
   let core: KeyborgCoreHandle | undefined;
   // `callbacks` is exposed as `instance._cb` to satisfy the slot wire
@@ -251,7 +255,7 @@ export function createKeyborg(win: Window): Keyborg {
     _cb: callbacks,
     dispose() {
       const wkb = localWin?.__keyborg;
-      if (wkb?.refs[id]) {
+      if (wkb?.refs[id] === instance) {
         delete wkb.refs[id];
         if (Object.keys(wkb.refs).length === 0) {
           wkb.core.dispose();

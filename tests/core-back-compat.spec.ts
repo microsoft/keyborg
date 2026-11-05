@@ -382,3 +382,192 @@ test("__keyborg.refs[id].dispose() is callable for cross-version teardown", asyn
   expect(result.hasDispose).toBe(true);
   expect(result.slotCleared).toBe(true);
 });
+
+for (const disposeIndex of [0, 1]) {
+  test(`independent bundles preserve the surviving instance when disposing copy ${disposeIndex}`, async ({
+    page,
+  }) => {
+    await page.goto("/iframe.html?id=core-back-compat--default");
+    await expect(page.getByTestId("fixture")).toBeVisible();
+
+    await page.evaluate(() => {
+      const iframe = document.createElement("iframe");
+      iframe.dataset.testid = "second-bundle";
+      iframe.src = location.href;
+      document.body.append(iframe);
+    });
+    await expect(
+      page.frameLocator('[data-testid="second-bundle"]').getByTestId("fixture"),
+    ).toBeVisible();
+
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        message.text().startsWith("Keyborg instance ")
+      ) {
+        errors.push(message.text());
+      }
+    });
+
+    const result = await page.evaluate((index) => {
+      const win = window as WindowWithKeyborgFactory;
+      const other = (
+        document.querySelector(
+          '[data-testid="second-bundle"]',
+        ) as HTMLIFrameElement
+      ).contentWindow as WindowWithKeyborgFactory;
+      const createFirst = win.createKeyborg;
+      const createSecond = other.createKeyborg;
+      const disposeFirst = win.disposeKeyborg;
+      const disposeSecond = other.disposeKeyborg;
+
+      if (!createFirst || !createSecond || !disposeFirst || !disposeSecond) {
+        throw new Error("keyborg factories not exposed by fixtures");
+      }
+
+      const originalFocus = HTMLElement.prototype.focus;
+      const first = createFirst(window);
+      const slot = win.__keyborg;
+
+      if (!slot) {
+        throw new Error("expected createKeyborg to populate window.__keyborg");
+      }
+
+      const second = createSecond(window);
+      const instances = [first, second];
+      const disposers = [disposeFirst, disposeSecond];
+      const seen: boolean[][] = [[], []];
+      first.subscribe((val) => seen[0].push(val));
+      second.subscribe((val) => seen[1].push(val));
+      first.setVal(true);
+
+      const bothRegistered =
+        Object.values(slot.refs).includes(first) &&
+        Object.values(slot.refs).includes(second);
+      const initialNotifications = seen.map((values) => [...values]);
+
+      disposers[index](instances[index]);
+      const survivor = instances[1 - index];
+      const survivorRegistered =
+        win.__keyborg === slot && Object.values(slot.refs).includes(survivor);
+      const focusOverridePreserved =
+        HTMLElement.prototype.focus !== originalFocus;
+
+      survivor.setVal(false);
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Tab", bubbles: true }),
+      );
+      const survivorHandlesKeydown = survivor.isNavigatingWithKeyboard();
+
+      disposers[1 - index](survivor);
+
+      return {
+        bothRegistered,
+        initialNotifications,
+        survivorRegistered,
+        focusOverridePreserved,
+        survivorHandlesKeydown,
+        slotCleared: !win.__keyborg,
+        focusRestored: HTMLElement.prototype.focus === originalFocus,
+      };
+    }, disposeIndex);
+
+    expect(result.bothRegistered).toBe(true);
+    expect(result.initialNotifications).toEqual([[true], [true]]);
+    expect(result.survivorRegistered).toBe(true);
+    expect(result.focusOverridePreserved).toBe(true);
+    expect(result.survivorHandlesKeydown).toBe(true);
+    expect(result.slotCleared).toBe(true);
+    expect(result.focusRestored).toBe(true);
+    expect(errors).toEqual([]);
+  });
+}
+
+test("a legacy copy registering k1 does not overwrite a new instance", async ({
+  page,
+}) => {
+  await page.goto("/iframe.html?id=core-back-compat--default");
+  await expect(page.getByTestId("fixture")).toBeVisible();
+
+  const result = await page.evaluate(() => {
+    const win = window as WindowWithKeyborgFactory;
+    const create = win.createKeyborg;
+    const dispose = win.disposeKeyborg;
+
+    if (!create || !dispose) {
+      throw new Error("keyborg factories not exposed by fixture");
+    }
+
+    const instance = create(window);
+    const slot = win.__keyborg;
+
+    if (!slot) {
+      throw new Error("expected createKeyborg to populate window.__keyborg");
+    }
+
+    const seen: boolean[] = [];
+    const legacy: ForeignInstance = { _cb: [(val) => seen.push(val)] };
+    slot.refs.k1 = legacy;
+    const instanceRegistered = Object.values(slot.refs).includes(instance);
+
+    instance.setVal(true);
+    dispose(instance);
+
+    const legacyPreserved = win.__keyborg === slot && slot.refs.k1 === legacy;
+    delete slot.refs.k1;
+    slot.core.dispose();
+    delete win.__keyborg;
+
+    return { instanceRegistered, seen, legacyPreserved };
+  });
+
+  expect(result.instanceRegistered).toBe(true);
+  expect(result.seen).toEqual([true]);
+  expect(result.legacyPreserved).toBe(true);
+});
+
+test("disposing a replaced reference does not dispose its new owner", async ({
+  page,
+}) => {
+  await page.goto("/iframe.html?id=core-back-compat--default");
+  await expect(page.getByTestId("fixture")).toBeVisible();
+
+  const result = await page.evaluate(() => {
+    const win = window as WindowWithKeyborgFactory;
+    const create = win.createKeyborg;
+    const dispose = win.disposeKeyborg;
+
+    if (!create || !dispose) {
+      throw new Error("keyborg factories not exposed by fixture");
+    }
+
+    let coreDisposed = false;
+    const slot = {
+      core: {
+        isNavigatingWithKeyboard: false,
+        dispose() {
+          coreDisposed = true;
+        },
+      },
+      refs: {} as Record<string, unknown>,
+    };
+    win.__keyborg = slot;
+
+    const instance = create(window);
+    const id = Object.keys(slot.refs)[0];
+    const replacement: ForeignInstance = { _cb: [] };
+    slot.refs[id] = replacement;
+
+    dispose(instance);
+
+    const replacementPreserved =
+      win.__keyborg === slot && slot.refs[id] === replacement;
+    delete win.__keyborg;
+
+    return { coreDisposed, replacementPreserved };
+  });
+
+  expect(result.coreDisposed).toBe(false);
+  expect(result.replacementPreserved).toBe(true);
+});
