@@ -118,11 +118,9 @@ test("supports a configurable getter-only focus descriptor", async ({
   expect(result.restoredEnumerable).toBe(result.expectedEnumerable);
 });
 
-// Verifies that `createKeyborg` interoperates with a foreign `__keyborg.core`
-// using a property-accessor `isNavigatingWithKeyboard` and a `dispose()`
-// method. This is the slot-shape contract that lets multiple keyborg majors
-// coexist on the same window.
-test("createKeyborg interops with foreign __keyborg.core", async ({ page }) => {
+test("createKeyborg upgrades a foreign core while preserving its state and handle", async ({
+  page,
+}) => {
   await page.goto("/iframe.html?id=core-back-compat--default");
   await expect(page.getByTestId("fixture")).toBeVisible();
 
@@ -135,9 +133,9 @@ test("createKeyborg interops with foreign __keyborg.core", async ({ page }) => {
       throw new Error("keyborg factories not exposed by fixture");
     }
 
-    let foreignNav = false;
+    let foreignNav = true;
     let setterCount = 0;
-    let disposed = false;
+    let disposeCount = 0;
 
     win.__keyborg = {
       core: {
@@ -151,21 +149,22 @@ test("createKeyborg interops with foreign __keyborg.core", async ({ page }) => {
           }
         },
         dispose() {
-          disposed = true;
+          disposeCount++;
         },
       },
       refs: {},
     };
 
+    const foreignCore = win.__keyborg.core;
     const k = create(window);
     const initialRead = k.isNavigatingWithKeyboard();
 
     k.setVal(true);
-    const afterSetTrueForeign = foreignNav;
+    const afterSetTrueForeign = foreignCore.isNavigatingWithKeyboard;
     const afterSetTrueRead = k.isNavigatingWithKeyboard();
 
     k.setVal(false);
-    const afterSetFalseForeign = foreignNav;
+    const afterSetFalseForeign = foreignCore.isNavigatingWithKeyboard;
 
     dispose(k);
 
@@ -175,17 +174,17 @@ test("createKeyborg interops with foreign __keyborg.core", async ({ page }) => {
       afterSetTrueRead,
       afterSetFalseForeign,
       setterCount,
-      disposed,
+      disposeCount,
       slotCleared: !win.__keyborg,
     };
   });
 
-  expect(result.initialRead).toBe(false);
+  expect(result.initialRead).toBe(true);
   expect(result.afterSetTrueForeign).toBe(true);
   expect(result.afterSetTrueRead).toBe(true);
   expect(result.afterSetFalseForeign).toBe(false);
-  expect(result.setterCount).toBe(2);
-  expect(result.disposed).toBe(true);
+  expect(result.setterCount).toBe(0);
+  expect(result.disposeCount).toBe(1);
   expect(result.slotCleared).toBe(true);
 });
 
@@ -283,11 +282,7 @@ test("__keyborg.refs broadcast notifies foreign instances via _cb", async ({
   expect(result.seen).toEqual([true, false]);
 });
 
-// Reverse direction (the original crash repro): a foreign core owns the slot
-// and broadcasts state changes via the 2.6.0 protocol — iterating `refs` and
-// calling `instance._cb.forEach(cb => cb(val))`. The new instance must expose
-// a `_cb` array reflecting `subscribe`/`unsubscribe`.
-test("foreign core broadcasting via old protocol notifies new subscribers", async ({
+test("a retired foreign core handle notifies new subscribers through the current core", async ({
   page,
 }) => {
   await page.goto("/iframe.html?id=core-back-compat--default");
@@ -527,7 +522,7 @@ test("a legacy copy registering k1 does not overwrite a new instance", async ({
   expect(result.legacyPreserved).toBe(true);
 });
 
-test("disposing a replaced reference does not dispose its new owner", async ({
+test("disposing an unregistered reference does not dispose its replacement", async ({
   page,
 }) => {
   await page.goto("/iframe.html?id=core-back-compat--default");
@@ -542,20 +537,14 @@ test("disposing a replaced reference does not dispose its new owner", async ({
       throw new Error("keyborg factories not exposed by fixture");
     }
 
-    let coreDisposed = false;
-    const slot = {
-      core: {
-        isNavigatingWithKeyboard: false,
-        dispose() {
-          coreDisposed = true;
-        },
-      },
-      refs: {} as Record<string, unknown>,
-    };
-    win.__keyborg = slot;
-
+    const originalFocus = HTMLElement.prototype.focus;
     const instance = create(window);
+    const slot = win.__keyborg;
+    if (!slot) {
+      throw new Error("expected createKeyborg to populate window.__keyborg");
+    }
     const id = Object.keys(slot.refs)[0];
+    delete slot.refs[id];
     const replacement: ForeignInstance = { _cb: [] };
     slot.refs[id] = replacement;
 
@@ -563,7 +552,8 @@ test("disposing a replaced reference does not dispose its new owner", async ({
 
     const replacementPreserved =
       win.__keyborg === slot && slot.refs[id] === replacement;
-    delete win.__keyborg;
+    const coreDisposed = HTMLElement.prototype.focus === originalFocus;
+    replacement.dispose?.();
 
     return { coreDisposed, replacementPreserved };
   });

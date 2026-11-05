@@ -4032,6 +4032,41 @@ __metadata:
   languageName: node
   linkType: hard
 
+"keyborg-legacy@npm:keyborg@2.14.1":
+  version: 2.14.1
+  resolution: "keyborg@npm:2.14.1::__archiveUrl=https%3A%2F%2Fms-feed-25.pkgs.visualstudio.com%2F1es-public%2F_packaging%2Fnpm-public%2Fnpm%2Fregistry%2Fkeyborg%2F-%2Fkeyborg-2.14.1.tgz"
+  checksum: 10/f8c656c2ad484aff70e6c590782d28918a2fdad8cb7b436cddd5142114d9eced2869481937e45e91984711c1bb962df9bad906fbd615c27066d9464143478488
+  languageName: node
+  linkType: hard
+
+"keyborg-notify@npm:keyborg@2.14.0":
+  version: 2.14.0
+  resolution: "keyborg@npm:2.14.0::__archiveUrl=https%3A%2F%2Fms-feed-25.pkgs.visualstudio.com%2F1es-public%2F_packaging%2Fnpm-public%2Fnpm%2Fregistry%2Fkeyborg%2F-%2Fkeyborg-2.14.0.tgz"
+  checksum: 10/a578df4bf049996c8ad56079a3a6b58631b7cc611e7b0e8cc72850a2ec587f02024c6e7dc5ce8db17e13caaaf9bf6dd1e52b6a5fea94461dacd549b13ac1f657
+  languageName: node
+  linkType: hard
+
+"keyborg-v1@npm:keyborg@1.1.0":
+  version: 1.1.0
+  resolution: "keyborg@npm:1.1.0::__archiveUrl=https%3A%2F%2Fms-feed-25.pkgs.visualstudio.com%2F1es-public%2F_packaging%2Fnpm-public%2Fnpm%2Fregistry%2Fkeyborg%2F-%2Fkeyborg-1.1.0.tgz"
+  checksum: 10/1b738338d5dc97bd9dbb90b8c0505cb2fceac2900b76129b3fa35b3bf5b161a41380c07118f1e9976ceb95c86eb7f5eb235a9be0fe2895cbbc5cd92a6bb6c2d0
+  languageName: node
+  linkType: hard
+
+"keyborg-v2@npm:keyborg@2.6.0":
+  version: 2.6.0
+  resolution: "keyborg@npm:2.6.0::__archiveUrl=https%3A%2F%2Fms-feed-25.pkgs.visualstudio.com%2F1es-public%2F_packaging%2Fnpm-public%2Fnpm%2Fregistry%2Fkeyborg%2F-%2Fkeyborg-2.6.0.tgz"
+  checksum: 10/090a9ca121b839bec34566bbb485161f57349c0a0ca6527180e3ca33a690e063505a5a21cc0e5ea2df8cc96cd3656abc365282999a07215ff001e3e56b50763a
+  languageName: node
+  linkType: hard
+
+"keyborg-v3@npm:keyborg@3.0.0":
+  version: 3.0.0
+  resolution: "keyborg@npm:3.0.0::__archiveUrl=https%3A%2F%2Fms-feed-25.pkgs.visualstudio.com%2F1es-public%2F_packaging%2Fnpm-public%2Fnpm%2Fregistry%2Fkeyborg%2F-%2Fkeyborg-3.0.0.tgz"
+  checksum: 10/1a9662be09c9432075b4783b3924314dc2c6b473982c05fe48e1c9aadc9eb4ddbc1eb5c23fb1c5c84459c1d024bd6ee5f02f8f11f7d92c0446ca56e6cb7c2457
+  languageName: node
+  linkType: hard
+
 "keyborg@workspace:.":
   version: 0.0.0-use.local
   resolution: "keyborg@workspace:."
@@ -4047,6 +4082,11 @@ __metadata:
     eslint-config-prettier: "npm:^10.1.8"
     eslint-import-resolver-typescript: "npm:^4.4.5"
     eslint-plugin-import-x: "npm:^4.17.1"
+    keyborg-legacy: "npm:keyborg@2.14.1"
+    keyborg-notify: "npm:keyborg@2.14.0"
+    keyborg-v1: "npm:keyborg@1.1.0"
+    keyborg-v2: "npm:keyborg@2.6.0"
+    keyborg-v3: "npm:keyborg@3.0.0"
     monosize: "npm:^0.10.0"
     monosize-bundler-webpack: "npm:^0.4.1"
     monosize-storage-git: "npm:^0.3.5"

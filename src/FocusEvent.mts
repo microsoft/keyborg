@@ -19,9 +19,8 @@ interface KeyborgFocus {
   __keyborgFocusDescriptor?: PropertyDescriptor;
 }
 
-// Internal data stored on `window.__keyborgData` as a tuple. Nothing outside
-// this module reads these slots, so a tuple drops the property-name strings
-// from the minified output — the indexes below inline as numeric literals.
+// Tuple positions are internal; named aliases below support older bundles'
+// public getLastFocusedProgrammatically() helpers.
 const FOCUS_IN_HANDLER = 0;
 const FOCUS_OUT_HANDLER = 1;
 const SHADOW_TARGETS = 2;
@@ -234,6 +233,9 @@ export function setupFocusEvent(win: Window): void {
       composed: true,
       detail: details,
     });
+    (
+      event as KeyborgFocusInEvent & { details: KeyborgFocusInEventDetails }
+    ).details = details;
 
     details.isFocusedProgrammatically =
       target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
@@ -248,6 +250,12 @@ export function setupFocusEvent(win: Window): void {
     focusOutHandler,
     shadowTargets,
   ];
+  Object.defineProperty(data, "lastFocusedProgrammatically", {
+    get: () => data[LAST_FOCUSED_PROGRAMMATICALLY],
+    set: (value: WeakRef<HTMLElement> | undefined) => {
+      data[LAST_FOCUSED_PROGRAMMATICALLY] = value;
+    },
+  });
   kwin.__keyborgData = data;
 
   addEventListener(doc, "focusin", focusInHandler);

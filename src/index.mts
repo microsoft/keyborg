@@ -4,7 +4,7 @@
  */
 
 export type { Keyborg, KeyborgCallback } from "./Keyborg.mts";
-export { createKeyborg, disposeKeyborg } from "./Keyborg.mts";
+export { createKeyborg, disposeKeyborg, version } from "./Keyborg.mts";
 
 export type {
   KeyborgFocusInEvent,
@@ -18,5 +18,3 @@ export {
   KEYBORG_FOCUSIN,
   KEYBORG_FOCUSOUT,
 } from "./FocusEvent.mts";
-
-export const version = process.env.PKG_VERSION;
