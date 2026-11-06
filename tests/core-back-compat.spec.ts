@@ -10,6 +10,7 @@ import type {
   disposeKeyborg,
   nativeFocus,
 } from "../src/index.mts";
+import type { enableKeyborgCompatibility } from "../src/compat.mts";
 
 interface ForeignCore {
   isNavigatingWithKeyboard: boolean;
@@ -25,6 +26,7 @@ interface WindowWithKeyborgFactory extends Window {
   createKeyborg?: typeof createKeyborg;
   disposeKeyborg?: typeof disposeKeyborg;
   nativeFocus?: typeof nativeFocus;
+  enableKeyborgCompatibility?: typeof enableKeyborgCompatibility;
   __keyborg?: {
     core: ForeignCore;
     refs: Record<string, unknown>;
@@ -156,6 +158,7 @@ test("createKeyborg upgrades a foreign core while preserving its state and handl
     };
 
     const foreignCore = win.__keyborg.core;
+    win.enableKeyborgCompatibility?.(window);
     const k = create(window);
     const initialRead = k.isNavigatingWithKeyboard();
 
@@ -320,6 +323,7 @@ test("a retired foreign core handle notifies new subscribers through the current
     };
 
     win.__keyborg = { core: foreignCore, refs: {} };
+    win.enableKeyborgCompatibility?.(window);
 
     const k = create(window);
     const seen: boolean[] = [];
@@ -539,6 +543,7 @@ test("disposing an unregistered reference does not dispose its replacement", asy
 
     const originalFocus = HTMLElement.prototype.focus;
     const instance = create(window);
+    win.enableKeyborgCompatibility?.(window);
     const slot = win.__keyborg;
     if (!slot) {
       throw new Error("expected createKeyborg to populate window.__keyborg");

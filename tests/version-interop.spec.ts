@@ -57,6 +57,7 @@ for (const firstVersion of legacyVersions) {
               other.keyborgModules[secondVersion],
             ];
             const originalFocus = HTMLElement.prototype.focus;
+            const originalDispatch = Element.prototype.dispatchEvent;
             const results = [];
 
             for (let cycle = 0; cycle < 2; cycle++) {
@@ -71,6 +72,7 @@ for (const firstVersion of legacyVersions) {
               first.subscribe(callbacks[firstIndex]);
               first.setVal(true);
               const firstCount = seen[firstIndex].length;
+              win.enableKeyborgCompatibility(window);
               const next = legacyFirst
                 ? modules[0].createKeyborg(window)
                 : modules[1].createKeyborg(window);
@@ -185,6 +187,8 @@ for (const firstVersion of legacyVersions) {
                 focusOverridePreserved,
                 slotCleared: !win.__keyborg,
                 focusRestored: HTMLElement.prototype.focus === originalFocus,
+                dispatchRestored:
+                  Element.prototype.dispatchEvent === originalDispatch,
               });
             }
             return results;
@@ -205,6 +209,7 @@ for (const firstVersion of legacyVersions) {
             focusOverridePreserved: true,
             slotCleared: true,
             focusRestored: true,
+            dispatchRestored: true,
           });
         }
         expect(errors).toEqual([]);
@@ -296,6 +301,7 @@ test("V1 static methods and instance identity survive takeover", async ({
     const seen: boolean[] = [];
     old.subscribe((val) => seen.push(val));
     old.setVal(true);
+    win.enableKeyborgCompatibility(window);
     const current = win.keyborgModules.current.createKeyborg(window);
     const identityPreserved = old instanceof win.LegacyKeyborg;
     // update() only broadcasts; unlike setVal(), it does not change state.
@@ -322,6 +328,7 @@ test("reassigning a live instance or the slot does not duplicate subscriptions",
   const result = await page.evaluate(() => {
     const win = window as unknown as WindowWithKeyborgModules;
     const instance = win.keyborgModules.current.createKeyborg(window);
+    win.enableKeyborgCompatibility(window);
     const slot = win.__keyborg;
     if (!slot) {
       throw new Error("expected a shared slot");
@@ -354,6 +361,10 @@ test("legacy and current instances keep navigation isolated per window", async (
     }
     const parent = win.keyborgModules.current.createKeyborg(window);
     const child = win.keyborgModules.current.createKeyborg(other);
+    win.enableKeyborgCompatibility(window);
+    const childWasNotEnabled = !(other as unknown as WindowWithKeyborgModules)
+      .__keyborgCompat;
+    win.enableKeyborgCompatibility(other);
     const parentLegacy = win.keyborgModules.v1.createKeyborg(window);
     const childLegacy = win.keyborgModules.v1.createKeyborg(other);
     parentLegacy.setVal(true);
@@ -369,12 +380,13 @@ test("legacy and current instances keep navigation isolated per window", async (
     win.keyborgModules.v1.disposeKeyborg(childLegacy);
     win.keyborgModules.current.disposeKeyborg(child);
     iframe.remove();
-    return { parentOnly, childOnly, childSurvives };
+    return { parentOnly, childOnly, childSurvives, childWasNotEnabled };
   });
   expect(result).toEqual({
     parentOnly: true,
     childOnly: true,
     childSurvives: true,
+    childWasNotEnabled: true,
   });
 });
 
@@ -385,6 +397,7 @@ test("callbacks can dispose all instances during a broadcast", async ({
   await expect(page.getByTestId("fixture")).toBeVisible();
   const result = await page.evaluate(() => {
     const win = window as unknown as WindowWithKeyborgModules;
+    win.enableKeyborgCompatibility(window);
     const current = win.keyborgModules.current.createKeyborg(window);
     const first = win.keyborgModules.notify.createKeyborg(window);
     const second = win.keyborgModules.notify.createKeyborg(window);
@@ -427,6 +440,7 @@ test("takeover replaces shadow-root listeners and final teardown removes them", 
     root.append(first, second);
     const legacy = win.keyborgModules.legacy.createKeyborg(window);
     first.focus();
+    win.enableKeyborgCompatibility(window);
     const current = win.keyborgModules.current.createKeyborg(window);
     let events = 0;
     root.addEventListener("keyborg:focusin", () => events++);
@@ -450,5 +464,72 @@ test("takeover replaces shadow-root listeners and final teardown removes them", 
     afterPartialDisposal: 2,
     afterTeardown: 2,
     restored: true,
+  });
+});
+
+test("compatibility has no import-time effects and requires explicit opt-in", async ({
+  page,
+}) => {
+  await page.goto("/iframe.html?id=version-interop--default");
+  await expect(page.getByTestId("fixture")).toBeVisible();
+  const result = await page.evaluate(() => {
+    const win = window as unknown as WindowWithKeyborgModules;
+    const originalDispatch = Element.prototype.dispatchEvent;
+    const noImportEffects = !win.__keyborg && !win.__keyborgCompat;
+    const current = win.keyborgModules.current.createKeyborg(window);
+    const noAutomaticOptIn =
+      !win.__keyborgCompat &&
+      !Object.getOwnPropertyDescriptor(window, "__keyborg")?.get;
+    const seen: boolean[] = [];
+    current.subscribe((val) => seen.push(val));
+    current.setVal(true);
+    const aliases: boolean[] = [];
+    const onFocus = (event: Event) => {
+      const focus = event as CustomEvent & { details?: unknown };
+      aliases.push(focus.details === focus.detail);
+    };
+    document.addEventListener("keyborg:focusin", onFocus, true);
+    const button = document.createElement("button");
+    document.body.append(button);
+    button.focus();
+    button.blur();
+    const defaultDispatchUnchanged =
+      Element.prototype.dispatchEvent === originalDispatch;
+    win.enableKeyborgCompatibility(window);
+    win.enableKeyborgCompatibility(window);
+    const statePreserved = current.isNavigatingWithKeyboard();
+    button.focus();
+    const unrelated = new CustomEvent("unrelated", {
+      detail: {},
+      cancelable: true,
+    });
+    button.addEventListener("unrelated", (event) => event.preventDefault());
+    const cancellationPreserved = !button.dispatchEvent(unrelated);
+    const unrelatedUntouched = !Object.hasOwn(unrelated, "details");
+    win.keyborgModules.current.disposeKeyborg(current);
+    document.removeEventListener("keyborg:focusin", onFocus, true);
+    button.remove();
+    return {
+      noImportEffects,
+      noAutomaticOptIn,
+      defaultDispatchUnchanged,
+      statePreserved,
+      aliases,
+      seen,
+      unrelatedUntouched,
+      cancellationPreserved,
+      dispatchRestored: Element.prototype.dispatchEvent === originalDispatch,
+    };
+  });
+  expect(result).toEqual({
+    noImportEffects: true,
+    noAutomaticOptIn: true,
+    defaultDispatchUnchanged: true,
+    statePreserved: true,
+    aliases: [false, true],
+    seen: [true],
+    unrelatedUntouched: true,
+    cancellationPreserved: true,
+    dispatchRestored: true,
   });
 });

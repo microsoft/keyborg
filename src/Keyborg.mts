@@ -5,11 +5,6 @@
 
 import { addEventListener, removeEventListener } from "./dom.mts";
 import {
-  getKeyborgSlot,
-  type KeyborgCoreHandle,
-  type WindowWithKeyborg,
-} from "./Compatibility.mts";
-import {
   disposeFocusEvent,
   KeyborgFocusInEvent,
   KEYBORG_FOCUSIN,
@@ -17,8 +12,6 @@ import {
 } from "./FocusEvent.mts";
 
 let _lastId = 0;
-
-export const version = process.env.PKG_VERSION;
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
@@ -54,19 +47,30 @@ interface KeyborgInternal extends Keyborg {
   dispose(): void;
 }
 
-function createKeyborgCore(
+export interface KeyborgCoreHandle {
+  isNavigatingWithKeyboard: boolean;
+  dispose(): void;
+}
+
+interface WindowWithKeyborg extends Window {
+  __keyborg?: {
+    core: KeyborgCoreHandle;
+    refs: Record<string, KeyborgInternal>;
+  };
+}
+
+export function createKeyborgCore(
   targetWindow: WindowWithKeyborg,
-  initialState = false,
 ): KeyborgCoreHandle {
   let currentTargetWindow: WindowWithKeyborg | undefined = targetWindow;
-  let isNavigating = initialState;
+  let isNavigating = false;
   let isMouseOrTouchUsedTimer: number | undefined;
 
   const broadcast = (): void => {
     const refs = currentTargetWindow?.__keyborg?.refs;
     if (refs) {
-      for (const id of Object.keys(refs)) {
-        refs[id]?._cb?.forEach((cb) => cb(isNavigating));
+      for (const instance of Object.values(refs)) {
+        instance._cb.forEach((cb) => cb(isNavigating));
       }
     }
   };
@@ -204,7 +208,6 @@ function createKeyborgCore(
 
 export function createKeyborg(win: Window): Keyborg {
   const kwin = win as WindowWithKeyborg;
-  const existing = getKeyborgSlot(win, version || "0.0.0", createKeyborgCore);
   // Avoid legacy kN IDs and collisions with independently loaded copies.
   let id: string;
   do {
@@ -217,7 +220,12 @@ export function createKeyborg(win: Window): Keyborg {
   // reference stays stable for foreign-version broadcasts.
   const callbacks: KeyborgCallback[] = [];
 
-  core = existing.core;
+  const existing = kwin.__keyborg;
+  if (existing) {
+    core = existing.core;
+  } else {
+    core = createKeyborgCore(kwin);
+  }
 
   const instance: KeyborgInternal = {
     isNavigatingWithKeyboard() {
@@ -256,7 +264,14 @@ export function createKeyborg(win: Window): Keyborg {
     },
   };
 
-  existing.refs[id] = instance;
+  if (existing) {
+    existing.refs[id] = instance;
+  } else {
+    kwin.__keyborg = {
+      core,
+      refs: { [id]: instance },
+    };
+  }
 
   return instance;
 }

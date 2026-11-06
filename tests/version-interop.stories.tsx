@@ -11,6 +11,7 @@ import * as v2 from "keyborg-v2";
 import * as v3 from "keyborg-v3";
 
 import { getKeyborgSlot } from "../src/Compatibility.mts";
+import { enableKeyborgCompatibility } from "../src/compat.mts";
 import * as current from "../src/index.mts";
 
 export type LegacyVersion = "v1" | "v2" | "notify" | "legacy" | "v3";
@@ -26,6 +27,8 @@ export interface WindowWithKeyborgModules extends Window {
     }
   >;
   getKeyborgSlot: typeof getKeyborgSlot;
+  enableKeyborgCompatibility: typeof enableKeyborgCompatibility;
+  __keyborgCompat?: unknown;
   LegacyKeyborg: typeof v1.Keyborg;
   __keyborg?: ReturnType<typeof getKeyborgSlot>;
 }
@@ -36,6 +39,7 @@ export const Default = () => {
   const win = window as unknown as WindowWithKeyborgModules;
   win.keyborgModules = { current, v1, v2, notify, legacy, v3 };
   win.getKeyborgSlot = getKeyborgSlot;
+  win.enableKeyborgCompatibility = enableKeyborgCompatibility;
   win.LegacyKeyborg = v1.Keyborg;
   return <div data-testid="fixture">version interop fixture</div>;
 };

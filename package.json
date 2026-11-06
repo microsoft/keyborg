@@ -15,6 +15,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./compatibility": {
+      "types": "./dist/compatibility.d.ts",
+      "import": "./dist/compatibility.js",
+      "require": "./dist/compatibility.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -25,7 +30,7 @@
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown --concurrency 1",
     "bundle-size": "yarn build && monosize measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",

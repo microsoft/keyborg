@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { Keyborg, KeyborgCallback } from "./Keyborg.mts";
-
-export interface KeyborgCoreHandle {
-  isNavigatingWithKeyboard: boolean;
-  dispose(): void;
-}
+import type {
+  Keyborg,
+  KeyborgCallback,
+  KeyborgCoreHandle,
+} from "./Keyborg.mts";
 
 type LegacyCore = Partial<KeyborgCoreHandle> & {
   getNavigating?: () => boolean;
