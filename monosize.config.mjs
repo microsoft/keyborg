@@ -18,7 +18,12 @@ const config = {
   bundler: webpackBundler((config) => {
     config.resolve = {
       alias: {
-        keyborg: path.resolve(dirname, "dist", "index.js"),
+        keyborg$: path.resolve(dirname, "dist", "index.js"),
+        "keyborg/compatibility$": path.resolve(
+          dirname,
+          "dist",
+          "compatibility.js",
+        ),
       },
     };
     return config;

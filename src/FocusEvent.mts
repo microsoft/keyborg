@@ -19,9 +19,7 @@ interface KeyborgFocus {
   __keyborgFocusDescriptor?: PropertyDescriptor;
 }
 
-// Internal data stored on `window.__keyborgData` as a tuple. Nothing outside
-// this module reads these slots, so a tuple drops the property-name strings
-// from the minified output — the indexes below inline as numeric literals.
+// Internal focus-event storage layout.
 const FOCUS_IN_HANDLER = 0;
 const FOCUS_OUT_HANDLER = 1;
 const SHADOW_TARGETS = 2;

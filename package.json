@@ -15,6 +15,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./compatibility": {
+      "types": "./dist/compatibility.d.ts",
+      "import": "./dist/compatibility.js",
+      "require": "./dist/compatibility.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -25,7 +30,7 @@
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown --concurrency 1",
     "bundle-size": "yarn build && monosize measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
@@ -48,6 +53,11 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import-x": "^4.17.1",
+    "keyborg-legacy": "npm:keyborg@2.14.1",
+    "keyborg-notify": "npm:keyborg@2.14.0",
+    "keyborg-v1": "npm:keyborg@1.1.0",
+    "keyborg-v2": "npm:keyborg@2.6.0",
+    "keyborg-v3": "npm:keyborg@3.0.0",
     "monosize": "^0.10.0",
     "monosize-bundler-webpack": "^0.4.1",
     "monosize-storage-git": "^0.3.5",

@@ -36,6 +36,31 @@ keyborg.subscribe(handler);
 keyborg.unsubscribe(handler);
 ```
 
+### Optional legacy compatibility
+
+The default entry keeps the independent-bundle ID collision fix without
+installing the legacy compatibility shim. Opt in separately when older,
+independently bundled Keyborg versions must share a window:
+
+```js
+import { createKeyborg } from "keyborg";
+import { enableKeyborgCompatibility } from "keyborg/compatibility";
+
+enableKeyborgCompatibility(window);
+const keyborg = createKeyborg(window);
+```
+
+Call the opt-in once in each participating modern bundle. The newest opted-in
+implementation owns the window, including when legacy instances were created
+first. Enabling compatibility preserves their state and subscriptions and
+adapts legacy notification, disposal, and focus helpers. It remains enabled
+across teardown and recreation.
+
+The compatibility entry has no import-time side effects and can be tree-shaken
+when unused. It does not add shim code to the default entry. References already
+overwritten before enabling compatibility cannot be recovered, and previously
+captured method references are not patched.
+
 ## Contributing
 
 Use Node.js 24.x (24.11.0 or newer) and Corepack to run the Yarn release pinned

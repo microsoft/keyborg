@@ -11,30 +11,9 @@ import {
   setupFocusEvent,
 } from "./FocusEvent.mts";
 
-interface WindowWithKeyborg extends Window {
-  __keyborg?: {
-    core: KeyborgCoreHandle;
-    refs: { [id: string]: Keyborg };
-  };
-}
-
 let _lastId = 0;
 
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
-
-/**
- * Internal handle for the per-window core state. Not part of the public API.
- *
- * Shape is part of the `__keyborg.core` slot contract: when multiple keyborg
- * majors share the same window, the second loader reads `core` set by the
- * first. Keep `isNavigatingWithKeyboard` as a writable property accessor and
- * `dispose()` as a method so older majors can still read/write state without
- * TypeError. Changes here are breaking for that interop.
- */
-interface KeyborgCoreHandle {
-  isNavigatingWithKeyboard: boolean;
-  dispose(): void;
-}
 
 /**
  * Used to determine the keyboard navigation state.
@@ -68,7 +47,21 @@ interface KeyborgInternal extends Keyborg {
   dispose(): void;
 }
 
-function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
+export interface KeyborgCoreHandle {
+  isNavigatingWithKeyboard: boolean;
+  dispose(): void;
+}
+
+interface WindowWithKeyborg extends Window {
+  __keyborg?: {
+    core: KeyborgCoreHandle;
+    refs: Record<string, KeyborgInternal>;
+  };
+}
+
+export function createKeyborgCore(
+  targetWindow: WindowWithKeyborg,
+): KeyborgCoreHandle {
   let currentTargetWindow: WindowWithKeyborg | undefined = targetWindow;
   let isNavigating = false;
   let isMouseOrTouchUsedTimer: number | undefined;
@@ -76,8 +69,8 @@ function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
   const broadcast = (): void => {
     const refs = currentTargetWindow?.__keyborg?.refs;
     if (refs) {
-      for (const id of Object.keys(refs)) {
-        (refs[id] as KeyborgInternal)._cb.forEach((cb) => cb(isNavigating));
+      for (const instance of Object.values(refs)) {
+        instance._cb.forEach((cb) => cb(isNavigating));
       }
     }
   };
@@ -215,7 +208,11 @@ function createKeyborgCore(targetWindow: WindowWithKeyborg): KeyborgCoreHandle {
 
 export function createKeyborg(win: Window): Keyborg {
   const kwin = win as WindowWithKeyborg;
-  const id = "k" + ++_lastId;
+  // Avoid legacy kN IDs and collisions with independently loaded copies.
+  let id: string;
+  do {
+    id = "k-" + ++_lastId;
+  } while (kwin.__keyborg?.refs[id]);
   let localWin: WindowWithKeyborg | undefined = kwin;
   let core: KeyborgCoreHandle | undefined;
   // `callbacks` is exposed as `instance._cb` to satisfy the slot wire
@@ -251,7 +248,7 @@ export function createKeyborg(win: Window): Keyborg {
     _cb: callbacks,
     dispose() {
       const wkb = localWin?.__keyborg;
-      if (wkb?.refs[id]) {
+      if (wkb?.refs[id] === instance) {
         delete wkb.refs[id];
         if (Object.keys(wkb.refs).length === 0) {
           wkb.core.dispose();

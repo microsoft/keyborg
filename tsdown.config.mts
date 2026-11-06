@@ -1,8 +1,7 @@
-import { defineConfig } from "tsdown";
+import { defineConfig, type UserConfig } from "tsdown";
 import pkg from "./package.json" with { type: "json" };
 
-export default defineConfig({
-  entry: ["src/index.mts"],
+const config = {
   format: ["cjs", "es"],
   target: "es2022",
 
@@ -14,4 +13,13 @@ export default defineConfig({
 
   dts: true,
   sourcemap: true,
-});
+} satisfies UserConfig;
+
+export default defineConfig([
+  { ...config, entry: ["src/index.mts"] },
+  {
+    ...config,
+    entry: { compatibility: "src/compat.mts" },
+    clean: false,
+  },
+]);
